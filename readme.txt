@@ -65,7 +65,7 @@ Submit an issue here in the GitHub repo for the time being.
 - Add in file uploads... This needs to be thought out and needs to be secure!!!!
 - In the app be sure to use a triple key system.
 - Be sure to support key rotatiing (forward security) so new members in groups can not see older messages other than when they joined.
-
+- Add the indiviual identity key(s) for a conversation in teh conversations payload.
 ## License
 
 This plugin is licensed under the GPLv2 or later.
