@@ -59,7 +59,6 @@ class BH_Messenger_REST {
                 ]
             ]
         ]);
-
     }
 
     /**
@@ -395,6 +394,10 @@ class BH_Messenger_REST {
 
     /**
      * Send a message in a conversation.
+     * This can send a message to either a private or group conversation. It is indifferent.
+     * 
+     * @param WP_REST_Request $request
+     * @return array|WP_Error
      */
     public function send_message($request) {
         $params = $request->get_body_params();
@@ -448,5 +451,13 @@ class BH_Messenger_REST {
         ];
     }
 
+    public function edit_message( $request) {
+    }
+
+    public function recall_message( $request) {
+    }
+
+    public function leave_conversation( $request) {
+    }
 }
 
