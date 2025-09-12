@@ -56,7 +56,8 @@ class BH_Messenger_REST {
 
         global $wpdb;
         $table = $wpdb->prefix . 'access_tokens';
-        $current_time = current_time('timestamp');
+        // Use the same time format as when inserting into the database
+        $current_time = date('Y-m-d H:i:s', current_time('timestamp'));
 
         $row = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $table WHERE user_id = %d AND expires_at > %s",
