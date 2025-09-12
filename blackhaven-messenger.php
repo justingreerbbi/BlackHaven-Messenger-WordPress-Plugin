@@ -22,7 +22,25 @@ define('BH_DB_VERSION', '1.0');
 
 // -------- Activation / Deactivation --------
 function bh_messenger_activate() {
-    add_option('bh_messenger_option', 'default_value');
+
+    // Add the default options for the plugin if they do not exist.
+    if (get_option('bh_messenger_options') === false) {
+        $default_options = array(
+            'enable_api' => 1,
+            'api_key' => wp_generate_password(32, false, false),
+            'token_expiry' => 3600, // 1 hour
+        );
+        add_option('bh_messenger_options', $default_options);
+    }
+
+    // Do the same for bh_messenger_advanced_options
+    if (get_option('bh_messenger_advanced_options') === false) {
+        $default_advanced_options = array(
+            'log_level' => 'error',
+            'log_file' => '',
+        );
+        add_option('bh_messenger_advanced_options', $default_advanced_options);
+    }
 
     global $wpdb;
     $charset_collate = $wpdb->get_charset_collate();

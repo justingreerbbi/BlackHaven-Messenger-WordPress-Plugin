@@ -17,7 +17,7 @@ class BH_Messenger_Options {
     private $screen_basic     = 'blackhaven-messenger-basic';
     private $screen_advanced  = 'blackhaven-messenger-advanced';
     private $opt_basic        = 'bh_messenger_option';
-    private $opt_advanced     = 'bh_messenger_advanced_option';
+    private $opt_advanced     = 'bh_messenger_advanced_options';
     private $opt_server_url   = 'bh_messenger_server_url';
 
     public function __construct() {
@@ -52,14 +52,19 @@ class BH_Messenger_Options {
     }
 
     public function render_settings_page() {
+
+        // Restrict access to admins that have the right capability.
         if (! current_user_can('manage_options')) {
             wp_die(esc_html__('You do not have permission to access this page.', 'blackhaven-messenger'));
         }
 
         $tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'basic';
-?>
+        ?>
         <div class="wrap">
             <h1>BlackHaven Messenger Settings</h1>
+
+            <?php settings_errors(); ?>
+
             <p>Configure the BlackHaven Messenger plugin below. Select a tab to view different settings.</p>
 
             <h2 class="nav-tab-wrapper">
@@ -202,35 +207,65 @@ class BH_Messenger_Options {
      * ---------------------------*/
     public function register_settings() {
         // BASIC TAB
-        register_setting($this->group_basic, $this->opt_basic);
+        register_setting($this->group_basic, $this->opt_basic); // will now be an array
         add_settings_section('bh_messenger_section_basic', 'Basic Settings', '__return_false', $this->screen_basic);
-        add_settings_field('bh_messenger_option_field', 'Option Value', array($this, 'render_basic_field'), $this->screen_basic, 'bh_messenger_section_basic');
+        
+        add_settings_field('bh_messenger_feature', 'API Enabled', [$this, 'render_api_enabled_option'], $this->screen_basic, 'bh_messenger_section_basic');
+        add_settings_field('bh_messenger_api_key', 'API Key', [$this, 'render_basic_api_key'], $this->screen_basic, 'bh_messenger_section_basic');
 
         // ADVANCED TAB
-        register_setting($this->group_advanced, $this->opt_advanced);
+        register_setting($this->group_advanced, $this->opt_advanced); // also array
         add_settings_section('bh_messenger_section_advanced', 'Advanced Settings', '__return_false', $this->screen_advanced);
-        add_settings_field('bh_messenger_advanced_field', 'Advanced Option', array($this, 'render_advanced_field'), $this->screen_advanced, 'bh_messenger_section_advanced');
+        add_settings_field('bh_messenger_timeout', 'Timeout', [$this, 'render_advanced_timeout'], $this->screen_advanced, 'bh_messenger_section_advanced');
+        add_settings_field('bh_messenger_debug', 'Enable Debug Mode', [$this, 'render_advanced_debug'], $this->screen_advanced, 'bh_messenger_section_advanced');
 
-        // CONNECTION PAGE (server URL option)
+        // CONNECTION PAGE
         register_setting('bh_messenger_connection', $this->opt_server_url);
     }
 
     /* -----------------------------
      * Field Renderers
      * ---------------------------*/
-    public function render_basic_field() {
-        $value = get_option($this->opt_basic, '');
-    ?>
-        <input type="text" name="<?php echo esc_attr($this->opt_basic); ?>"
+
+    // BASIC
+    public function render_basic_api_key() {
+        $options = get_option($this->opt_basic, []);
+        $value = isset($options['api_key']) ? $options['api_key'] : '';
+        ?>
+        <input type="text" name="<?php echo esc_attr($this->opt_basic); ?>[api_key]"
             value="<?php echo esc_attr($value); ?>" class="regular-text" />
-    <?php
+        <?php
     }
 
-    public function render_advanced_field() {
-        $value = get_option($this->opt_advanced, '');
-    ?>
-        <input type="text" name="<?php echo esc_attr($this->opt_advanced); ?>"
-            value="<?php echo esc_attr($value); ?>" class="regular-text" />
-<?php
+    public function render_api_enabled_option() {
+        $options = get_option($this->opt_basic, []);
+        $checked = !empty($options['feature']) ? 'checked' : '';
+        ?>
+        <label>
+            <input type="checkbox" name="<?php echo esc_attr($this->opt_basic); ?>[feature]" value="1" <?php echo $checked; ?> />
+        </label>
+        <?php
     }
+
+    // ADVANCED
+    public function render_advanced_timeout() {
+        $options = get_option($this->opt_advanced, []);
+        $value = isset($options['timeout']) ? intval($options['timeout']) : 30;
+        ?>
+        <input type="number" name="<?php echo esc_attr($this->opt_advanced); ?>[timeout]"
+            value="<?php echo esc_attr($value); ?>" min="1" /> seconds
+        <?php
+    }
+
+    public function render_advanced_debug() {
+        $options = get_option($this->opt_advanced, []);
+        $checked = !empty($options['debug']) ? 'checked' : '';
+        ?>
+        <label>
+            <input type="checkbox" name="<?php echo esc_attr($this->opt_advanced); ?>[debug]" value="1" <?php echo $checked; ?> />
+            Enable Debug Mode
+        </label>
+        <?php
+    }
+
 }

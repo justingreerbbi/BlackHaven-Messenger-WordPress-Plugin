@@ -9,7 +9,8 @@ BlackHaven Messenger is a WordPress plugin that enables real-time messaging func
 - Notifications for new messages
 - Secure and private conversations
 - Easy integration with WordPress user system
-- Customizable settings and appearance
+- Enhanced Security for the most secure enviroment
+- E2EE 
 
 ## Installation
 
@@ -31,11 +32,11 @@ BlackHaven Messenger is a WordPress plugin that enables real-time messaging func
 
 ## Frequently Asked Questions
 
-**Q:** Does this plugin support group chats?  
-**A:** Currently, only one-on-one messaging is supported.
+**Q:** How can BlackHaven Messenger be secure and supported on shared servers? 
+**A:** First off, we recommend at least VPS hosting but we reconize that VPS can be exspensive. The BlackHaven Messenger plugin for WordPress does not not have any pof the encryption keys stored on the server. This means that not even your server knows the content that is being shared.
 
 **Q:** Is messaging private?  
-**A:** Yes, all messages are stored securely and are only visible to participants.
+**A:** Yes, all messages are stored securely and are only visible to participants. Encryption keys are never relayed or stored on the server.
 
 ## Support
 
@@ -45,6 +46,17 @@ For support, feature requests, or bug reports, please visit the [plugin support 
 
 ### 1.0.0
 - Initial release
+
+## ToDo
+- Add option for API enable or disable
+- Add option to notifiy the admins when settings have changed for the plugin.
+- Adjust the security audit plugin to be relvent for the plugin. Not a whole site vulnerability scan.
+- Look into adding an API scan feature for using WP Scan for clients without them needing to have the Securi plugin installed for the sake of security (why reivent the wheel)
+- Look into making the QR code image in the connection tab for easier setup.
+- Look into the type of message system we can use for realtime por near realtime? MQTT? Whatever we use should work on shared servers.
+- Hashing the access token requires a user ID to be sent as well in the API. Is there any other way to do this effectivly.
+- Fix time expired access tokens
+- Add in an option for how long a token is valid for.
 
 ## License
 
