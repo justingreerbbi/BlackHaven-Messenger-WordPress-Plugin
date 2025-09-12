@@ -34,15 +34,15 @@ class BH_CronJobs {
     }
 
     public function run_hourly() {
-        // Your hourly cron job code here
+        do_action('bh_messenger_hourly_tasks');
     }
 
     public function run_12hourly() {
-        // Your 12-hour cron job code here
+        do_action('bh_messenger_12hourly_tasks');
     }
 
     public function run_daily() {
-        // Your daily cron job code here
+        do_action('bh_messenger_daily_tasks');
     }
 }
 
