@@ -49,6 +49,7 @@ function bh_messenger_activate() {
     $conversation_members_table = $wpdb->prefix . 'conversation_members';
     $messages_table = $wpdb->prefix . 'messages';
     $user_keys_table = $wpdb->prefix . 'user_keys';
+    $conversation_keys_table = $wpdb->prefix . 'conversation_keys';
 
     $sql1 = "CREATE TABLE $access_token_table (
         ID BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -101,12 +102,23 @@ function bh_messenger_activate() {
         FOREIGN KEY (user_id) REFERENCES {$wpdb->prefix}users(ID) ON DELETE CASCADE
     ) $charset_collate;";
 
+    $sql6 = "CREATE TABLE $conversation_keys_table (
+        conversation_id BIGINT UNSIGNED NOT NULL,
+        user_id BIGINT UNSIGNED NOT NULL,
+        encrypted_key VARBINARY(512) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (conversation_id, user_id),
+        FOREIGN KEY (conversation_id) REFERENCES {$wpdb->prefix}conversations(id),
+        FOREIGN KEY (user_id) REFERENCES {$wpdb->prefix}users(ID)
+    ) $charset_collate;";
+
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
     dbDelta($sql1);
     dbDelta($sql2);
     dbDelta($sql3);
     dbDelta($sql4);
     dbDelta($sql5);
+    dbDelta($sql6);
 }
 register_activation_hook(__FILE__, 'bh_messenger_activate');
 
@@ -130,13 +142,16 @@ function bh_messenger_deactivate() {
         $conversation_members_table = $wpdb->prefix . 'conversation_members';
         $messages_table = $wpdb->prefix . 'messages';
         $user_keys_table = $wpdb->prefix . 'user_keys';
+        $conversation_keys_table = $wpdb->prefix . 'conversation_keys';
 
         // Note: The order of removal is important due to foreign key constraints. Took me forever to figure that out.
+        // Drop tables in order to avoid foreign key constraint errors.
+        $wpdb->query("DROP TABLE IF EXISTS $conversation_keys_table");
+        $wpdb->query("DROP TABLE IF EXISTS $user_keys_table");
         $wpdb->query("DROP TABLE IF EXISTS $conversation_members_table");
         $wpdb->query("DROP TABLE IF EXISTS $messages_table");
         $wpdb->query("DROP TABLE IF EXISTS $conversations_table");
         $wpdb->query("DROP TABLE IF EXISTS $access_token_table");
-        $wpdb->query("DROP TABLE IF EXISTS $user_keys_table");
     }
 }
 register_deactivation_hook(__FILE__, 'bh_messenger_deactivate');
