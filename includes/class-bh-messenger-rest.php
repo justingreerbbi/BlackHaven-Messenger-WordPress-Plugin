@@ -18,6 +18,13 @@ class BH_Messenger_REST {
             'permission_callback' => '__return_true',
         ]);
 
+        // Set User Public Key Route
+        register_rest_route('blackhaven-messenger/v1/keys', '/set', [
+            'methods'  => 'POST',
+            'callback' => [$this, 'set_user_key'],
+            'permission_callback' => [$this, 'check_access_token'],
+        ]);
+
         // Get Users Route
         register_rest_route('blackhaven-messenger/v1', '/users', [
             'methods'  => 'GET',
@@ -200,6 +207,48 @@ class BH_Messenger_REST {
             'expires' => $expires,
             'created' => $created,
             'user_data' => $user_info,
+        ];
+    }
+
+    /**
+     * Set or update a user's public key.
+     * This is used by the client to set their public key for end-to-end encryption.
+     * 
+     * @param WP_REST_Request $request
+     * @return array|WP_Error
+     */
+    public function set_user_key( $request) {
+        $params = $request->get_body_params();
+        $user_id = intval($params['user_id'] ?? 0);
+        $public_key = $params['public_key'] ?? '';
+        $key_type = $params['key_type'] ?? 'identity';
+        $expires_at = isset($params['expires_at']) ? date('Y-m-d H:i:s', strtotime($params['expires_at'])) : null;
+
+        if (!$user_id || empty($public_key)) {
+            return new WP_Error('invalid_params', 'Missing required parameters.', ['status' => 400]);
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'user_keys';
+
+        // Insert or update the user key
+        $insert = $wpdb->replace($table, [
+            'user_id' => $user_id,
+            'public_key' => $public_key,
+            'key_type' => $key_type,
+            'expires_at' => $expires_at,
+        ]);
+
+        if ($insert === false) {
+            return new WP_Error('db_error', 'Database error. Please contact your system administrator.', ['status' => 500]);
+        }
+
+        return [
+            'success' => true,
+            'user_id' => $user_id,
+            'public_key' => $public_key,
+            'key_type' => $key_type,
+            'expires_at' => $expires_at,
         ];
     }
 

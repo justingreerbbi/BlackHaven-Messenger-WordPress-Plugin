@@ -164,6 +164,7 @@ require_once BH_MESSENGER_DIR . 'includes/class-bh-functions.php';      // Plugi
 require_once BH_MESSENGER_DIR . 'includes/class-bh-options.php';        // Options Page Class
 require_once BH_MESSENGER_DIR . 'includes/class-bh-messenger-rest.php'; // REST API Class
 require_once BH_MESSENGER_DIR . 'includes/class-bh-security-audit.php'; // Security Audit Class
+require_once BH_MESSENGER_DIR . 'includes/class-bh-cronjobs.php';
 
 // -------- Bootstrap the functions singleton --------
 add_action('plugins_loaded', 'bhm_bootstrap_functions_singleton', 5);
@@ -204,3 +205,6 @@ $options = get_option('bh_messenger_option', []);
 if (!empty($options['enable_api'])) {
     new BH_Messenger_REST();
 }
+
+
+
