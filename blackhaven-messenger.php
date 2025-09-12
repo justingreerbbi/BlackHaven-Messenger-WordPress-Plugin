@@ -37,7 +37,7 @@ function bh_messenger_activate() {
     if (get_option('bh_messenger_advanced_options') === false) {
         $default_advanced_options = array(
             'access_token_lifetime' => 3600, // 1 hour
-            'remove_data_on_deactivation' => 1,
+            'remove_data_on_deactivation' => 0,
         );
         add_option('bh_messenger_advanced_options', $default_advanced_options);
     }
