@@ -53,19 +53,21 @@ Submit an issue here in the GitHub repo for the time being.
 - Initial release
 
 ## ToDo
-- Add option to notifiy the admins when settings have changed for the plugin.
-- Adjust the security audit plugin to be relvent for the plugin. Not a whole site vulnerability scan.
+- Add option to notify the admins when settings have changed for the plugin.
+- Adjust the security audit plugin to be relevant for the plugin. Not a whole site vulnerability scan.
 - Look into adding an API scan feature for using WP Scan for clients without them needing to have the Securi plugin installed for the sake of security (why reivent the wheel)
 - Look into making the QR code image in the connection tab for easier setup.
 - Look into the type of message system we can use for realtime por near realtime? MQTT? Whatever we use should work on shared servers.
-- Hashing the access token requires a user ID to be sent as well in the API. Is there any other way to do this effectivly.
+- Hashing the access token requires a user ID to be sent as well in the API. Is there any other way to do this effectively.
 - Add hook for password reset and token removal.
 - Look into issuing a new refresh token every so often in normal requests so that the refresh token revolves. This will require the any app using this to look for a new refreh token in just about every call.
-- Allow for groupo messages to have a name.
+- Allow for group messages to have a name.
 - Add in file uploads... This needs to be thought out and needs to be secure!!!!
 - In the app be sure to use a triple key system.
-- Be sure to support key rotatiing (forward security) so new members in groups can not see older messages other than when they joined.
-- Add the indiviual identity key(s) for a conversation in teh conversations payload.
+- Be sure to support key rotating (forward security) so new members in groups can not see older messages other than when they joined.
+- Add the individual identity key(s) for a conversation in teh conversations payload.
+- Add ability to send notes to ones self (start conversations with self). Right now, it errors out.
+
 ## License
 
 This plugin is licensed under the GPLv2 or later.

@@ -158,7 +158,7 @@ register_deactivation_hook(__FILE__, 'bh_messenger_deactivate');
 
 // Add a JS confirmation dialog on plugin deactivation if "remove_data_on_deactivation" is enabled.
 // Just to be sure the user knows what they are doing to the fullest extent possible.
-add_filter('plugin_action_links_' . plugin_basename(__FILE__), function($actions) {
+add_filter('plugin_action_links_' . plugin_basename(__FILE__), function ($actions) {
     $options = get_option('bh_messenger_advanced_options', []);
     if (!empty($options['remove_data_on_deactivation'])) {
         $deactivate_url = isset($actions['deactivate']) ? $actions['deactivate'] : '';
@@ -220,6 +220,3 @@ $options = get_option('bh_messenger_option', []);
 if (!empty($options['enable_api'])) {
     new BH_Messenger_REST();
 }
-
-
-
