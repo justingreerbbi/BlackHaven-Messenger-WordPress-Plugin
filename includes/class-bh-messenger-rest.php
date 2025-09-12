@@ -20,6 +20,12 @@ class BH_Messenger_REST {
             'callback' => [$this, 'protected_endpoint'],
             'permission_callback' => [$this, 'check_access_token'],
         ]);
+
+        register_rest_route('blackhaven-messenger/v1', '/users', [
+            'methods'  => 'GET',
+            'callback' => [$this, 'get_users'],
+            'permission_callback' => [$this, 'check_access_token'],
+        ]);
     }
 
     /**
@@ -56,7 +62,6 @@ class BH_Messenger_REST {
 
         global $wpdb;
         $table = $wpdb->prefix . 'access_tokens';
-        // Use the same time format as when inserting into the database
         $current_time = date('Y-m-d H:i:s', current_time('timestamp'));
 
         $row = $wpdb->get_row($wpdb->prepare(
@@ -102,33 +107,60 @@ class BH_Messenger_REST {
 
         // Generate secure token.
         $token = bin2hex(random_bytes(32));
+        $refresh_token = bin2hex(random_bytes(32));
 
         // Hash the token for storage.
         $hashed_token = wp_hash_password($token);
+        $hashed_refresh_token = wp_hash_password($refresh_token);
 
-        // Set expiration time (1 hour from now by default).
-        // Set expiration time (1 hour from now by default) using WordPress timezone.
+        // Get the options for token expiry.
+        $options = get_option('bh_messenger_advanced_options', []);
+        $token_expiry = isset($options['access_token_lifetime']) ? intval($options['access_token_lifetime']) : 3600;
+
+        // Set expiration time using WordPress timezone.
         $current_time = current_time('timestamp'); // Local timestamp
-        $expires = date('Y-m-d H:i:s', $current_time + HOUR_IN_SECONDS);
         $created = date('Y-m-d H:i:s', $current_time);
 
+        // If the access token lifetime is set to 0 or less, make the token never expire (somewhat).
+        // If the setting is 0 for never expire, we set it to 10 years from now. 10 Years is enough.
+        // If you are reading this, never expiring is a HUGE no no for security reasons but I will cave for this.
+        if ($token_expiry <= 0) {
+            $expires = date('Y-m-d H:i:s', strtotime('+10 years', $current_time));
+        } else {
+            $expires = date('Y-m-d H:i:s', $current_time + $token_expiry);
+        }
+
         // Filter Expiration Time.
-        $expires = apply_filters('blackhaven_messenger_access_token_expires', $expires);
+        $expires = apply_filters('blackhaven_messenger_authorize_access_token_expires', $expires);
+
+        // By default, we will only return the user ID.
+        $user_info = array(
+            'ID' => (int) $user->ID,
+        );
+
+        // Allow for filtering the user information.
+        $user_info = apply_filters('blackhaven_messenger_authorize_user_info_data', $user_info, $user);
 
         // Insert the token into the database.
-        $wpdb->insert($table, [
+        $insert = $wpdb->insert($table, [
             'user_id'    => $user->ID,
             'token'      => $hashed_token,
+            'refresh_token' => $hashed_refresh_token,
             'expires_at' => $expires,
-            'created_at' => $created,
+            'created_at' => $created
         ]);
+
+        if ($insert === false) {
+            return new WP_Error('db_error', 'Database error. Please contact your system administrator.', ['status' => 500]);
+        }
 
         return [
             'success' => true,
             'token'   => $token,
+            'refresh_token' => $refresh_token,
             'expires' => $expires,
             'created' => $created,
-            'user_id' => (int) $user->ID,
+            'user_data' => $user_info,
         ];
     }
 
@@ -143,4 +175,23 @@ class BH_Messenger_REST {
             'user_id' => (int) $user_id,
         ];
     }
+
+    /**
+     * Return a list of the users.
+     *
+     * @todo: We need to add a way where the admin can allow which users are chat users.
+     */
+    public function get_users() {
+        $users = get_users();
+        $user_list = [];
+        foreach ($users as $user) {
+            $user_list[] = [
+                'ID'       => (int) $user->ID,
+                'display_name' => $user->display_name,
+            ];
+        }
+        return $user_list;
+    }
+
+    public functio
 }
