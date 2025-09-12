@@ -48,6 +48,7 @@ function bh_messenger_activate() {
     $conversations_table = $wpdb->prefix . 'conversations';
     $conversation_members_table = $wpdb->prefix . 'conversation_members';
     $messages_table = $wpdb->prefix . 'messages';
+    $user_keys_table = $wpdb->prefix . 'user_keys';
 
     $sql1 = "CREATE TABLE $access_token_table (
         ID BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -90,11 +91,22 @@ function bh_messenger_activate() {
         INDEX idx_conversation_time (conversation_id, created_at)
     ) $charset_collate;";
 
+    $sql5 = "CREATE TABLE $user_keys_table (
+        user_id BIGINT UNSIGNED NOT NULL,
+        public_key VARBINARY(255) NOT NULL,
+        key_type ENUM('identity', 'signed_prekey', 'one_time_prekey') DEFAULT 'identity',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        expires_at TIMESTAMP NULL DEFAULT NULL,
+        PRIMARY KEY (user_id, key_type),
+        FOREIGN KEY (user_id) REFERENCES {$wpdb->prefix}users(ID) ON DELETE CASCADE
+    ) $charset_collate;";
+
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
     dbDelta($sql1);
     dbDelta($sql2);
     dbDelta($sql3);
     dbDelta($sql4);
+    dbDelta($sql5);
 }
 register_activation_hook(__FILE__, 'bh_messenger_activate');
 
@@ -117,12 +129,14 @@ function bh_messenger_deactivate() {
         $conversations_table = $wpdb->prefix . 'conversations';
         $conversation_members_table = $wpdb->prefix . 'conversation_members';
         $messages_table = $wpdb->prefix . 'messages';
+        $user_keys_table = $wpdb->prefix . 'user_keys';
 
         // Note: The order of removal is important due to foreign key constraints. Took me forever to figure that out.
         $wpdb->query("DROP TABLE IF EXISTS $conversation_members_table");
         $wpdb->query("DROP TABLE IF EXISTS $messages_table");
         $wpdb->query("DROP TABLE IF EXISTS $conversations_table");
         $wpdb->query("DROP TABLE IF EXISTS $access_token_table");
+        $wpdb->query("DROP TABLE IF EXISTS $user_keys_table");
     }
 }
 register_deactivation_hook(__FILE__, 'bh_messenger_deactivate');

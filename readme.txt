@@ -55,6 +55,7 @@ Submit an issue here in the GitHub repo for the time being.
 - Look into issuing a new refresh token every so often in normal requests so that the refresh token revolves. This will require the any app using this to look for a new refreh token in just about every call.
 - Allow for groupo messages to have a name.
 - Add in file uploads... This needs to be thought out and needs to be secure!!!!
+- In the app be sure to use a triple key system.
 
 ## License
 
