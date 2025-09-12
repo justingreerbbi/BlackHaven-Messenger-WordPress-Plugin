@@ -16,7 +16,7 @@ Send the request body as `form-data` with the following parameters:
 | username  | text | The username of the user attempting to log in. |
 | password  | text | The password associated with the provided username. |
 
-## Response
+### Response
 
 On successful login, the server responds with a JSON object:
 | Field       | Type   | Description                                                                                                                |
@@ -44,6 +44,35 @@ On successful login, the server responds with a JSON object:
         }
 }
 ```
+
+## Adding an identity key to the system
+
+Once a user is authorized, it is the clients responisbility to generate a public identify key. Once the key is created, it would be sent to the server to be stored. The public key will be used by other users to encrypt/decrypt messages with each other. 
+
+The plugin exposes an endpoint to add a identify key to the server:
+
+- **Method:** `POST`
+- **URL:** `https:/.<wordpress_url>/wp-json/blackhaven-messenger/v1/keys/add`
+
+### Request Body
+
+ Send a request body as `form-data` with the following parameters:
+
+| Parameter   | Type   | Description                                      |
+|-------------|--------|--------------------------------------------------|
+| user_id     | text   | The ID of the user adding the identity key.      |
+| public_key  | text   | The public identity key to be stored.            |
+| key_type    | text   | The type of key being added (e.g., `"identity"`).|
+
+### Response
+
+| Field        | Type    | Description                                         |
+|--------------|---------|-----------------------------------------------------|
+| `success`    | boolean | Indicates if the key was added successfully.        |
+| `user_id`    | integer | The ID of the user who added the identity key.      |
+| `public_key` | string  | The public identity key that was stored.            |
+| `key_type`   | string  | The type of key added (e.g., `"identity"`).         |
+| `expires_at` | null    | Expiration time of the key, if applicable.          |
 
 ## Usage
 

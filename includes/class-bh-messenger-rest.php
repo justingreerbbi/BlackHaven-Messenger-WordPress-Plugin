@@ -18,10 +18,10 @@ class BH_Messenger_REST {
             'permission_callback' => '__return_true',
         ]);
 
-        // Set User Public Key Route
-        register_rest_route('blackhaven-messenger/v1/keys', '/set', [
+        // Add User Public Key Route
+        register_rest_route('blackhaven-messenger/v1/keys', '/add', [
             'methods'  => 'POST',
-            'callback' => [$this, 'set_user_key'],
+            'callback' => [$this, 'add_user_key'],
             'permission_callback' => [$this, 'check_access_token'],
         ]);
 
@@ -217,7 +217,7 @@ class BH_Messenger_REST {
      * @param WP_REST_Request $request
      * @return array|WP_Error
      */
-    public function set_user_key( $request) {
+    public function add_user_key( $request) {
         $params = $request->get_body_params();
         $user_id = intval($params['user_id'] ?? 0);
         $public_key = $params['public_key'] ?? '';
