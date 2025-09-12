@@ -281,12 +281,28 @@ class BH_Messenger_REST {
         global $wpdb;
         $table = $wpdb->prefix . 'conversations';
 
+        // Get conversations for the user
         $conversations = $wpdb->get_results($wpdb->prepare(
             "SELECT c.* FROM $table c
             JOIN {$wpdb->prefix}conversation_members cm ON c.ID = cm.conversation_id
             WHERE cm.user_id = %d",
             $user_id
         ));
+
+        // For each conversation, get members and their keys
+        foreach ($conversations as &$conversation) {
+            // Get members
+            $members = $wpdb->get_results($wpdb->prepare(
+            "SELECT u.ID, u.display_name, uk.public_key, uk.key_type, uk.expires_at
+             FROM {$wpdb->prefix}conversation_members cm
+             JOIN {$wpdb->prefix}users u ON cm.user_id = u.ID
+             LEFT JOIN {$wpdb->prefix}user_keys uk ON uk.user_id = u.ID
+             WHERE cm.conversation_id = %d",
+            $conversation->ID
+            ));
+
+            $conversation->members = $members;
+        }
 
         return $conversations;
     }
