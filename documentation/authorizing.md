@@ -19,13 +19,14 @@ Send the request body as `form-data` with the following parameters:
 ## Response
 
 On successful login, the server responds with a JSON object:
-| Field         | Type    | Description                                                                                  |
-|---------------|---------|----------------------------------------------------------------------------------------------|
-| success       | boolean | Indicates if the login was successful (`true` for success).                                  |
-| token         | string  | Authentication token for future requests. Store securely.                                    |
-| refresh_token | string  | Token used to re-authenticate without a full login.                                          |
-| expires       | string  | Expiration time of the token.                                                                |
-| created_at    | string  | Timestamp when the token was generated.                                                      |
+| **Field**       | **Type**   | **Description**                                                                                                    |
+|-----------------|------------|--------------------------------------------------------------------------------------------------------------------|
+| `success`       | boolean    | Indicates if the login was successful (`true` for success).                                                        |
+| `token`         | string     | Authentication token for future requests. **Store securely.**                                                      |
+| `refresh_token` | string     | Token used to re-authenticate without a full login.                                                                |
+| `expires`       | string     | Expiration time of the token.<br>Example: `"2025-09-08 21:03:34"`                                                  |
+| `created_at`    | string     | Timestamp when the token was generated.<br>Example: `"2024-06-10 18:45:12"`                                        |
+| `user_data`     | object     | Contains user information:<br><br>```json<br>{ "ID": 123, "display_name": "John Doe" }<br>```                      |
 
 ### Example Response
 
@@ -36,6 +37,11 @@ On successful login, the server responds with a JSON object:
     "refresh_token": "<refresh_token>",
     "expires": "2025-09-08 21:03:34",
     "created_at": "2024-06-10 18:45:12"
+    ,
+        "user_data": {
+            "ID": 3746583,
+            "display_name": "John Doe"
+        }
 }
 ```
 

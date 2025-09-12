@@ -192,6 +192,4 @@ class BH_Messenger_REST {
         }
         return $user_list;
     }
-
-    public functio
 }
