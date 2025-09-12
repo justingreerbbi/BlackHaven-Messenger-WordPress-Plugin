@@ -31,4 +31,4 @@
 
 ## Support
 
-For help, contact [support@blackhaven.local](mailto:support@blackhaven.local).
+ or request support on [GitHub Issues](https://github.com/justingreerbbi/BlackHaven-Messenger-WordPress-Plugin/issues).
