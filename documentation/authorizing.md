@@ -26,7 +26,7 @@ On successful login, the server responds with a JSON object:
 | `refresh_token` | string     | Token used to re-authenticate without a full login.                                                                |
 | `expires`       | string     | Expiration time of the token.<br>Example: `"2025-09-08 21:03:34"`                                                  |
 | `created_at`    | string     | Timestamp when the token was generated.<br>Example: `"2024-06-10 18:45:12"`                                        |
-| `user_data`     | object     | Contains user information:<br><br>```json<br>{ "ID": 123, "display_name": "John Doe" }```                          |
+| `user_data`     | object     | Contains user information:<br><br>```{ "ID": 123, "display_name": "John Doe" }```                                  |
 
 ### Example Response
 
