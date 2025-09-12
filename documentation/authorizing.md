@@ -1,4 +1,4 @@
-# Login Endpoint Documentation
+# Authorization Endpoint Documentation
 
 This endpoint is used to authenticate a user and obtain an access token for subsequent requests. It allows users to log in to the application by providing their credentials.
 
