@@ -1,9 +1,14 @@
 # Blackhaven Messenger Plugin Installation Guide
 
+BlackHaven Messenger should be installed in at a VPS hosting solution. Why designing and building the plugin, I will try my best to accommodate shared hosting. 
+
+If there are any issues with shared hosting, I will update this file accordinly.
+
 ## Requirements
 
-- WordPress 5.0 or higher
-- PHP 7.2 or higher
+- WordPress 6.8.2 or higher
+- PHP 8.0 or higher
+- WordPress permalinks need to be anything other than the default.
 
 ## Installation
 
@@ -27,8 +32,12 @@
 
 ## Configuration
 
-- Navigate to `Settings > Blackhaven Messenger` to configure plugin options.
+- Navigate to `Messenger -> Settings` to configure plugin options.
+
+## Shared Hosting Issues
+
+- As of now, there are no issues.
 
 ## Support
 
- or request support on [GitHub Issues](https://github.com/justingreerbbi/BlackHaven-Messenger-WordPress-Plugin/issues).
+Create an issue at [GitHub Issues](https://github.com/justingreerbbi/BlackHaven-Messenger-WordPress-Plugin/issues).
