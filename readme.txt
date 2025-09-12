@@ -67,6 +67,8 @@ Submit an issue here in the GitHub repo for the time being.
 - Be sure to support key rotating (forward security) so new members in groups can not see older messages other than when they joined.
 - Add the individual identity key(s) for a conversation in teh conversations payload.
 - Add ability to send notes to ones self (start conversations with self). Right now, it errors out.
+- Update API endpoints for starting a conversation to fall in line with conversations/private/start, etc and not endpoint hackery.
+- Add getting started guide on activation to guide the user on what to do to get started.
 
 ## License
 
