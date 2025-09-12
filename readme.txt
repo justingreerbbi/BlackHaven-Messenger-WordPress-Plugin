@@ -56,10 +56,7 @@ Submit an issue here in the GitHub repo for the time being.
 - Add in an option for how long a token is valid for.
 - Add hook for password reset and token removal.
 - Look into issuing a new refresh token every so often in normal requests so that the refresh token revolves. This will require the any app using this to look for a new refreh token in just about every call.
-- Pay model is support and security auditing?
-- Pay model idea would be to start and configure a full server that supports voice, and realtime logic as well?
-- Pay model support? Pro Plugin with license? Pro could have even more features. 
-- Pay model - Simple donate form like RAR model. Ask nicely?
+- Allow for groupo messages to have a name.
 
 ## License
 

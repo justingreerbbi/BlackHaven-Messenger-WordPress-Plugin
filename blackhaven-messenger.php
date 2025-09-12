@@ -106,19 +106,23 @@ function bh_messenger_deactivate() {
     // If the user has choosen to remove data on deactivation, do so.
     $options = get_option('bh_messenger_advanced_options', []);
     if (isset($options['remove_data_on_deactivation']) && $options['remove_data_on_deactivation']) {
+
+        // Remove all plugin options.
         delete_option('bh_messenger_options');
         delete_option('bh_messenger_advanced_options');
 
-        // Remove custom tables.
+        // Remove all plugin tables.
         global $wpdb;
-        $access_token_table = $wpdb->prefix . 'access_tokens'; // @todo: Look at adding our own prefix to avoid conflicts.
+        $access_token_table = $wpdb->prefix . 'access_tokens';
         $conversations_table = $wpdb->prefix . 'conversations';
         $conversation_members_table = $wpdb->prefix . 'conversation_members';
         $messages_table = $wpdb->prefix . 'messages';
-        $wpdb->query("DROP TABLE IF EXISTS $access_token_table");
-        $wpdb->query("DROP TABLE IF EXISTS $conversations_table");
+
+        // Note: The order of removal is important due to foreign key constraints. Took me forever to figure that out.
         $wpdb->query("DROP TABLE IF EXISTS $conversation_members_table");
         $wpdb->query("DROP TABLE IF EXISTS $messages_table");
+        $wpdb->query("DROP TABLE IF EXISTS $conversations_table");
+        $wpdb->query("DROP TABLE IF EXISTS $access_token_table");
     }
 }
 register_deactivation_hook(__FILE__, 'bh_messenger_deactivate');
