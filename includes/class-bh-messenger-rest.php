@@ -18,12 +18,6 @@ class BH_Messenger_REST {
             'permission_callback' => '__return_true',
         ]);
 
-        register_rest_route('blackhaven-messenger/v1', '/protected', [
-            'methods'  => 'GET',
-            'callback' => [$this, 'protected_endpoint'],
-            'permission_callback' => [$this, 'check_access_token'],
-        ]);
-
         register_rest_route('blackhaven-messenger/v1', '/users', [
             'methods'  => 'GET',
             'callback' => [$this, 'get_users'],
@@ -176,21 +170,6 @@ class BH_Messenger_REST {
             'expires' => $expires,
             'created' => $created,
             'user_data' => $user_info,
-        ];
-    }
-
-    /**
-     * Example Protected Endpoint
-     * 
-     * @param WP_REST_Request $request
-     * @return array
-     */
-    public function protected_endpoint($request) {
-        $user_id = $request->get_param('user_id');
-        return [
-            'success' => true,
-            'message' => 'You have access!',
-            'user_id' => (int) $user_id,
         ];
     }
 
