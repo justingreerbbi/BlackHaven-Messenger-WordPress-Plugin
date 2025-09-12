@@ -8,6 +8,9 @@ class BH_Messenger_REST {
         add_action('rest_api_init', [$this, 'register_routes']);
     }
 
+    /**
+     * Register REST API routes.
+     */
     public function register_routes() {
         register_rest_route('blackhaven-messenger/v1', '/authorize', [
             'methods'  => 'POST',
@@ -26,11 +29,20 @@ class BH_Messenger_REST {
             'callback' => [$this, 'get_users'],
             'permission_callback' => [$this, 'check_access_token'],
         ]);
+
+        register_rest_route('blackhaven-messenger/v1', '/conversations', [
+            'methods'  => 'GET',
+            'callback' => [$this, 'get_conversations'],
+            'permission_callback' => [$this, 'check_access_token'],
+        ]);
     }
 
     /**
      * Check the request for a valid access token.
      * The token can be in the Authorization header as a Bearer token or as a query parameter.
+     * 
+     * @param WP_REST_Request $request
+     * @return true|WP_Error
      */
     public function check_access_token($request) {
         // Check for token in Authorization header or query parameter
@@ -87,6 +99,9 @@ class BH_Messenger_REST {
      * @todo: Implement rate limiting and logging for security purposes.
      * @todo: Add option for number of allow access tokens per user and expiration time via settings.
      * @todo: Decide how we handle multiple tokens per user (e.g., invalidate old tokens, allow multiple, etc.).
+     * 
+     * @param WP_REST_Request $request
+     * @return array|WP_Error
      */
     public function authorize($request) {
         $params = $request->get_body_params();
@@ -166,6 +181,9 @@ class BH_Messenger_REST {
 
     /**
      * Example Protected Endpoint
+     * 
+     * @param WP_REST_Request $request
+     * @return array
      */
     public function protected_endpoint($request) {
         $user_id = $request->get_param('user_id');
@@ -191,5 +209,27 @@ class BH_Messenger_REST {
             ];
         }
         return $user_list;
+    }
+
+    /**
+     * Return a list of conversations for the authenticated user.
+     *
+     * @param WP_REST_Request $request
+     * @return array
+     */
+    public function get_conversations($request) {
+        $user_id = $request->get_param('user_id');
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'conversations';
+
+        $conversations = $wpdb->get_results($wpdb->prepare(
+            "SELECT c.* FROM $table c
+            JOIN {$wpdb->prefix}conversation_members cm ON c.ID = cm.conversation_id
+            WHERE cm.user_id = %d",
+            $user_id
+        ));
+
+        return $conversations;
     }
 }

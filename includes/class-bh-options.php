@@ -273,7 +273,7 @@ foreach ($all_plugins as $plugin_file => $plugin_data) {
 
     public function sanitize_advanced_options($input) {
         return [
-            'access_token_lifetime'     => isset($input['access_token_lifetime']) ? max(5, absint($input['access_token_lifetime'])) : 30,
+            'access_token_lifetime'     => isset($input['access_token_lifetime']) ? max(0, absint($input['access_token_lifetime'])) : 3600,
             'remove_data_on_deactivation' => !empty($input['remove_data_on_deactivation']) ? 1 : 0,
             'debug'                     => !empty($input['debug']) ? 1 : 0,
         ];
@@ -300,7 +300,7 @@ foreach ($all_plugins as $plugin_file => $plugin_data) {
         <input type="number"
                name="<?php echo esc_attr($this->opt_advanced); ?>[access_token_lifetime]"
                value="<?php echo esc_attr($value); ?>"
-               min="5" /> <?php esc_html_e('seconds (minimum 5)', 'blackhaven-messenger'); ?>
+               min="0" /> <?php esc_html_e('seconds (never expire 0)', 'blackhaven-messenger'); ?>
         <?php
     }
 
