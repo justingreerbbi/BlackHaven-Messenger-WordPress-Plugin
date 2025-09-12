@@ -1,16 +1,14 @@
 # BlackHaven Messenger
 
-BlackHaven Messenger is a WordPress plugin that enables real-time messaging functionality on your WordPress site. Enhance user engagement by allowing visitors, members, or customers to communicate seamlessly.
+BlackHaven Messenger is a WordPress plugin that enables near real-time messaging functionality using your WordPress install as a backend. Right now the plugin is in active development and is not ready for production.
 
 ## Features
 
-- Real-time messaging between users
-- User-friendly chat interface
-- Notifications for new messages
-- Secure and private conversations
-- Easy integration with WordPress user system
-- Enhanced Security for the most secure enviroment
-- E2EE 
+- Enables near realtime messaging using the built in REST API.
+- Easy to setup and configure.
+- Support for one-on-one communication.
+- Support for group communication.
+- Support for file transfers.
 
 ## Installation
 
@@ -21,14 +19,13 @@ BlackHaven Messenger is a WordPress plugin that enables real-time messaging func
 
 ## Usage
 
-- After activation, a Messenger widget will appear on your site.
-- Users can start conversations by clicking the Messenger icon.
-- Configure plugin settings under **Settings > BlackHaven Messenger**.
+- After activation, a Messenger menu will appear in your WordPress admin area.
+- Currently, usage of the messenger is only through the API. Check out the documentation (Need to add the documentation).
 
 ## Requirements
 
-- WordPress 5.0 or higher
-- PHP 7.2 or higher
+- WordPress 6.8.2 or higher
+- PHP 8.0 or higher
 
 ## Frequently Asked Questions
 
@@ -40,7 +37,7 @@ BlackHaven Messenger is a WordPress plugin that enables real-time messaging func
 
 ## Support
 
-For support, feature requests, or bug reports, please visit the [plugin support forum](https://wordpress.org/support/plugin/blackhaven-messenger) or contact the developer at support@blackhaven.local.
+Submit an issue here in the GitHub repo for the time being.
 
 ## Changelog
 
