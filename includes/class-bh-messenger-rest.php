@@ -18,17 +18,48 @@ class BH_Messenger_REST {
             'permission_callback' => '__return_true',
         ]);
 
+        // Get Users Route
         register_rest_route('blackhaven-messenger/v1', '/users', [
             'methods'  => 'GET',
             'callback' => [$this, 'get_users'],
             'permission_callback' => [$this, 'check_access_token'],
         ]);
 
+        // Get Conversations Route
         register_rest_route('blackhaven-messenger/v1', '/conversations', [
             'methods'  => 'GET',
             'callback' => [$this, 'get_conversations'],
             'permission_callback' => [$this, 'check_access_token'],
         ]);
+
+        // Start Private Conversation Route
+        register_rest_route('blackhaven-messenger/v1/conversations/', '/start-private', [
+            'methods'  => 'POST',
+            'callback' => [$this, 'start_private_conversation'],
+            'permission_callback' => [$this, 'check_access_token'],
+        ]);
+
+        // Start Group Conversation Route
+        register_rest_route('blackhaven-messenger/v1/conversations/', '/start-group', [
+            'methods'  => 'POST',
+            'callback' => [$this, 'start_group_conversation'],
+            'permission_callback' => [$this, 'check_access_token'],
+        ]);
+
+        // Send Message Route
+        register_rest_route('blackhaven-messenger/v1/conversations/', '/(?P<conversation_id>\d+)/send', [
+            'methods'  => 'POST',
+            'callback' => [$this, 'send_message'],
+            'permission_callback' => [$this, 'check_access_token'],
+            'args' => [
+                'conversation_id' => [
+                    'validate_callback' => function($param, $request, $key) {
+                        return is_numeric($param) && intval($param) > 0;
+                    }
+                ]
+            ]
+        ]);
+
     }
 
     /**
@@ -211,4 +242,211 @@ class BH_Messenger_REST {
 
         return $conversations;
     }
+
+    /**
+     * Start a new conversation between two users with an initial encrypted message.
+     * 
+     * @todo: If there is aready an existing conversation between the two users, send the message there instead of creating a new one.
+     *
+     * @param WP_REST_Request $request
+     * @return array|WP_Error
+     */
+    public function start_private_conversation($request) {
+        $params = $request->get_body_params();
+        $creator_id = intval($request->get_param('user_id'));
+        $other_user_id = intval($params['other_user_id'] ?? 0);
+        $encrypted_message = sanitize_text_field($params['encrypted_message'] ?? '');
+
+        if (!$creator_id || !$other_user_id || empty($encrypted_message)) {
+            return new WP_Error('invalid_params', 'Missing required parameters.', ['status' => 400]);
+        }
+
+        global $wpdb;
+
+        // Insert new conversation
+        $insert_conversation = $wpdb->insert(
+            $wpdb->prefix . 'conversations',
+            [
+            'type' => 'private',
+            'created_by' => $creator_id
+            ]
+        );
+
+        if ($insert_conversation === false) {
+            return new WP_Error('db_error', 'Failed to create conversation.', ['status' => 500]);
+        }
+
+        $conversation_id = $wpdb->insert_id;
+
+        // Add both users to conversation_members
+        $members_inserted = $wpdb->query(
+            $wpdb->prepare(
+            "INSERT INTO {$wpdb->prefix}conversation_members (conversation_id, user_id) VALUES (%d, %d), (%d, %d)",
+            $conversation_id, $creator_id, $conversation_id, $other_user_id
+            )
+        );
+
+        if ($members_inserted === false) {
+            return new WP_Error('db_error', 'Failed to add members.', ['status' => 500]);
+        }
+
+        // Insert first message
+        $message_inserted = $wpdb->insert(
+            $wpdb->prefix . 'messages',
+            [
+            'conversation_id' => $conversation_id,
+            'sender_id' => $creator_id,
+            'encrypted_text' => $encrypted_message
+            ]
+        );
+
+        if ($message_inserted === false) {
+            return new WP_Error('db_error', 'Failed to send message.', ['status' => 500]);
+        }
+
+        return [
+            'success' => true,
+            'conversation_id' => $conversation_id
+        ];
+    }
+
+    /**
+     * Start a new group conversation with an initial encrypted message.
+     * 
+     * @todo Tie this into the rest API hook.
+     * 
+     * @param WP_REST_Request $request
+     * @return array|WP_Error
+     */
+    public function start_group_conversation($request) {
+        $params = $request->get_body_params();
+        $creator_id = intval($request->get_param('user_id'));
+
+        // @todo: I am not sure this is the best way to do this. Maybe support JSON body? JSON would not be inline with form data we are using for other things.
+        $member_ids = [];
+        if (isset($params['member_ids'])) {
+            if (is_array($params['member_ids'])) {
+            $member_ids = array_map('intval', $params['member_ids']);
+            } elseif (is_string($params['member_ids'])) {
+            $member_ids = array_map('intval', array_filter(array_map('trim', explode(',', $params['member_ids']))));
+            }
+        }
+        $encrypted_message = sanitize_text_field($params['encrypted_message'] ?? '');
+
+        // Ensure creator is included and remove duplicates.
+        $all_member_ids = array_unique(array_merge([$creator_id], $member_ids));
+
+        // @todo: Maybe look into simply making a single group if this fails to be 2 or more members.
+        if (!$creator_id || count($all_member_ids) < 2 || empty($encrypted_message)) {
+            return new WP_Error('invalid_params', 'Missing required parameters.', ['status' => 400]);
+        }
+
+        global $wpdb;
+
+        // Insert new group conversation
+        $insert_conversation = $wpdb->insert(
+            $wpdb->prefix . 'conversations',
+            [
+            'type' => 'group',
+            'created_by' => $creator_id
+            ]
+        );
+
+        if ($insert_conversation === false) {
+            return new WP_Error('db_error', 'Failed to create group conversation.', ['status' => 500]);
+        }
+
+        $conversation_id = $wpdb->insert_id;
+
+        // Prepare values for bulk insert
+        $values = [];
+        foreach ($all_member_ids as $user_id) {
+            $values[] = $wpdb->prepare('(%d, %d)', $conversation_id, $user_id);
+        }
+        $values_sql = implode(',', $values);
+
+        $members_inserted = $wpdb->query(
+            "INSERT INTO {$wpdb->prefix}conversation_members (conversation_id, user_id) VALUES $values_sql"
+        );
+
+        if ($members_inserted === false) {
+            return new WP_Error('db_error', 'Failed to add group members.', ['status' => 500]);
+        }
+
+        // Insert first group message
+        $message_inserted = $wpdb->insert(
+            $wpdb->prefix . 'messages',
+            [
+            'conversation_id' => $conversation_id,
+            'sender_id' => $creator_id,
+            'encrypted_text' => $encrypted_message
+            ]
+        );
+
+        if ($message_inserted === false) {
+            return new WP_Error('db_error', 'Failed to send group message.', ['status' => 500]);
+        }
+
+        return [
+            'success' => true,
+            'conversation_id' => $conversation_id
+        ];
+    }
+
+    /**
+     * Send a message in a conversation.
+     */
+    public function send_message($request) {
+        $params = $request->get_body_params();
+        $conversation_id = intval($request->get_param('conversation_id')); // Grab the conversation from the url
+        $sender_id = intval($request->get_param('user_id'));
+        $encrypted_message = sanitize_text_field($params['encrypted_message'] ?? '');
+
+        if (!$conversation_id || !$sender_id || empty($encrypted_message)) {
+            return new WP_Error('invalid_params', 'Missing required parameters.', ['status' => 400]);
+        }
+
+        global $wpdb;
+
+        // Be sure the sender is part of the conversation.
+        $is_member = $wpdb->get_var($wpdb->prepare(
+            "SELECT conversation_id FROM {$wpdb->prefix}conversation_members WHERE conversation_id = %d AND user_id = %d",
+            $conversation_id,
+            $sender_id
+        )); 
+
+        if (!$is_member) {
+            
+            // This is most likely and unauthorized access attempt.
+            do_action('blackhaven_messenger_unauthorized_conversation_access_attempt', [
+                'conversation_id' => $conversation_id,
+                'user_id' => $sender_id,
+                'request_ip' => $_SERVER['REMOTE_ADDR'] ?? '',
+                'request_data' => $params,
+            ]);
+
+            return new WP_Error('not_a_member', 'You are not a member of this conversation.', ['status' => 403]);
+        }
+
+        // Insert the new message.
+        $message_inserted = $wpdb->insert(
+            $wpdb->prefix . 'messages',
+            [
+                'conversation_id' => $conversation_id,
+                'sender_id' => $sender_id,
+                'encrypted_text' => $encrypted_message
+            ]
+        );
+
+        if ($message_inserted === false) {
+            return new WP_Error('db_error', 'Failed to send message.', ['status' => 500]);
+        }
+
+        return [
+            'success' => true,
+            'message_id' => $wpdb->insert_id
+        ];
+    }
+
 }
+
