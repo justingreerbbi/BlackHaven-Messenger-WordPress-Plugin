@@ -19,6 +19,7 @@ Send the request body as `form-data` with the following parameters:
 ## Response
 
 On successful login, the server responds with a JSON object:
+| Field       | Type   | Description                                                                                                                |
 |-----------------|------------|--------------------------------------------------------------------------------------------------------------------|
 | `success`       | boolean    | Indicates if the login was successful (`true` for success).                                                        |
 | `token`         | string     | Authentication token for future requests. **Store securely.**                                                      |
