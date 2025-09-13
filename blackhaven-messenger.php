@@ -20,6 +20,15 @@ define('BH_MESSENGER_PLUGIN_VERSION', '1.0.0');
 define('BH_MESSENGER_DIR', plugin_dir_path(__FILE__));
 define('BH_DB_VERSION', '1.0');
 
+// Redirect the user the the connection information screen on plugin activation.
+// Not sure if this is the best way to do this, but it seems to work. This is important for UX.
+add_action('activated_plugin', function ($plugin) {
+    if ($plugin === plugin_basename(__FILE__)) {
+        wp_safe_redirect(admin_url('admin.php?page=blackhaven-messenger-connection&status=welcome'));
+        exit;
+    }
+});
+
 /**
  * Plugin Activation Hook.
  */

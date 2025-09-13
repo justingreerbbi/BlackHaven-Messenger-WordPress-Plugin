@@ -60,7 +60,7 @@ class BH_Messenger_REST {
             'permission_callback' => [$this, 'check_access_token'],
             'args' => [
                 'conversation_id' => [
-                    'validate_callback' => function($param, $request, $key) {
+                    'validate_callback' => function ($param, $request, $key) {
                         return is_numeric($param) && intval($param) > 0;
                     }
                 ]
@@ -136,6 +136,9 @@ class BH_Messenger_REST {
      */
     public function authorize($request) {
         $params = $request->get_body_params();
+        if (empty($params)) {
+            $params = json_decode($request->get_body(), true) ?? [];
+        }
         $username = sanitize_user($params['username'] ?? '');
         $password = $params['password'] ?? '';
 
@@ -217,8 +220,11 @@ class BH_Messenger_REST {
      * @param WP_REST_Request $request
      * @return array|WP_Error
      */
-    public function add_user_key( $request) {
+    public function add_user_key($request) {
         $params = $request->get_body_params();
+        if (empty($params)) {
+            $params = json_decode($request->get_body(), true) ?? [];
+        }
         $user_id = intval($params['user_id'] ?? 0);
         $public_key = $params['public_key'] ?? '';
         $key_type = $params['key_type'] ?? 'identity';
@@ -293,12 +299,12 @@ class BH_Messenger_REST {
         foreach ($conversations as &$conversation) {
             // Get members
             $members = $wpdb->get_results($wpdb->prepare(
-            "SELECT u.ID, u.display_name, uk.public_key, uk.key_type, uk.expires_at
+                "SELECT u.ID, u.display_name, uk.public_key, uk.key_type, uk.expires_at
              FROM {$wpdb->prefix}conversation_members cm
              JOIN {$wpdb->prefix}users u ON cm.user_id = u.ID
              LEFT JOIN {$wpdb->prefix}user_keys uk ON uk.user_id = u.ID
              WHERE cm.conversation_id = %d",
-            $conversation->ID
+                $conversation->ID
             ));
 
             $conversation->members = $members;
@@ -317,6 +323,9 @@ class BH_Messenger_REST {
      */
     public function start_private_conversation($request) {
         $params = $request->get_body_params();
+        if (empty($params)) {
+            $params = json_decode($request->get_body(), true) ?? [];
+        }
         $creator_id = intval($request->get_param('user_id'));
         $other_user_id = intval($params['other_user_id'] ?? 0);
         $encrypted_message = sanitize_text_field($params['encrypted_message'] ?? '');
@@ -331,8 +340,8 @@ class BH_Messenger_REST {
         $insert_conversation = $wpdb->insert(
             $wpdb->prefix . 'conversations',
             [
-            'type' => 'private',
-            'created_by' => $creator_id
+                'type' => 'private',
+                'created_by' => $creator_id
             ]
         );
 
@@ -345,8 +354,11 @@ class BH_Messenger_REST {
         // Add both users to conversation_members
         $members_inserted = $wpdb->query(
             $wpdb->prepare(
-            "INSERT INTO {$wpdb->prefix}conversation_members (conversation_id, user_id) VALUES (%d, %d), (%d, %d)",
-            $conversation_id, $creator_id, $conversation_id, $other_user_id
+                "INSERT INTO {$wpdb->prefix}conversation_members (conversation_id, user_id) VALUES (%d, %d), (%d, %d)",
+                $conversation_id,
+                $creator_id,
+                $conversation_id,
+                $other_user_id
             )
         );
 
@@ -358,9 +370,9 @@ class BH_Messenger_REST {
         $message_inserted = $wpdb->insert(
             $wpdb->prefix . 'messages',
             [
-            'conversation_id' => $conversation_id,
-            'sender_id' => $creator_id,
-            'encrypted_text' => $encrypted_message
+                'conversation_id' => $conversation_id,
+                'sender_id' => $creator_id,
+                'encrypted_text' => $encrypted_message
             ]
         );
 
@@ -384,15 +396,18 @@ class BH_Messenger_REST {
      */
     public function start_group_conversation($request) {
         $params = $request->get_body_params();
+        if (empty($params)) {
+            $params = json_decode($request->get_body(), true) ?? [];
+        }
         $creator_id = intval($request->get_param('user_id'));
 
         // @todo: I am not sure this is the best way to do this. Maybe support JSON body? JSON would not be inline with form data we are using for other things.
         $member_ids = [];
         if (isset($params['member_ids'])) {
             if (is_array($params['member_ids'])) {
-            $member_ids = array_map('intval', $params['member_ids']);
+                $member_ids = array_map('intval', $params['member_ids']);
             } elseif (is_string($params['member_ids'])) {
-            $member_ids = array_map('intval', array_filter(array_map('trim', explode(',', $params['member_ids']))));
+                $member_ids = array_map('intval', array_filter(array_map('trim', explode(',', $params['member_ids']))));
             }
         }
         $encrypted_message = sanitize_text_field($params['encrypted_message'] ?? '');
@@ -411,8 +426,8 @@ class BH_Messenger_REST {
         $insert_conversation = $wpdb->insert(
             $wpdb->prefix . 'conversations',
             [
-            'type' => 'group',
-            'created_by' => $creator_id
+                'type' => 'group',
+                'created_by' => $creator_id
             ]
         );
 
@@ -441,9 +456,9 @@ class BH_Messenger_REST {
         $message_inserted = $wpdb->insert(
             $wpdb->prefix . 'messages',
             [
-            'conversation_id' => $conversation_id,
-            'sender_id' => $creator_id,
-            'encrypted_text' => $encrypted_message
+                'conversation_id' => $conversation_id,
+                'sender_id' => $creator_id,
+                'encrypted_text' => $encrypted_message
             ]
         );
 
@@ -466,6 +481,9 @@ class BH_Messenger_REST {
      */
     public function send_message($request) {
         $params = $request->get_body_params();
+        if (empty($params)) {
+            $params = json_decode($request->get_body(), true) ?? [];
+        }
         $conversation_id = intval($request->get_param('conversation_id')); // Grab the conversation from the url
         $sender_id = intval($request->get_param('user_id'));
         $encrypted_message = sanitize_text_field($params['encrypted_message'] ?? '');
@@ -481,10 +499,10 @@ class BH_Messenger_REST {
             "SELECT conversation_id FROM {$wpdb->prefix}conversation_members WHERE conversation_id = %d AND user_id = %d",
             $conversation_id,
             $sender_id
-        )); 
+        ));
 
         if (!$is_member) {
-            
+
             // This is most likely and unauthorized access attempt.
             do_action('blackhaven_messenger_unauthorized_conversation_access_attempt', [
                 'conversation_id' => $conversation_id,
@@ -516,13 +534,12 @@ class BH_Messenger_REST {
         ];
     }
 
-    public function edit_message( $request) {
+    public function edit_message($request) {
     }
 
-    public function recall_message( $request) {
+    public function recall_message($request) {
     }
 
-    public function leave_conversation( $request) {
+    public function leave_conversation($request) {
     }
 }
-
