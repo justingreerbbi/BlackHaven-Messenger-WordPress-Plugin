@@ -111,7 +111,7 @@ function bh_messenger_activate() {
 
     $sql5 = "CREATE TABLE $user_keys_table (
         user_id BIGINT UNSIGNED NOT NULL,
-        public_key VARBINARY(255) NOT NULL,
+        public_key VARBINARY(2048) NOT NULL,
         key_type ENUM('identity', 'signed_prekey', 'one_time_prekey') DEFAULT 'identity',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         expires_at TIMESTAMP NULL DEFAULT NULL,
