@@ -185,7 +185,7 @@ class BH_Messenger_Options {
             }
         }
 
-        echo "Plugin Database Table Information:\n";
+        echo "BlackHaven Table Information:\n";
         global $wpdb;
         $allowed_tables = [
             BH_TABLE_ACCESS_TOKENS => 'Tokens',
