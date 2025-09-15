@@ -1,4 +1,11 @@
 <?php
+/**
+ * BlackHaven Messenger REST API Class
+ * Handles all REST API endpoints for the BlackHaven Messenger plugin.
+ * 
+ * @package BlackHavenMessenger
+ * @todo: Instead of allowing user_id in the request, we should restructure the API to get the user ID from the URL. We still need to look into masking the ID of the user though as well.
+ */
 if (! defined('ABSPATH')) {
     exit;
 }
@@ -12,20 +19,28 @@ class BH_Messenger_REST {
      * Register REST API routes.
      */
     public function register_routes() {
+        // Authorization Route.
         register_rest_route('blackhaven-messenger/v1', '/authorize', [
             'methods'  => 'POST',
             'callback' => [$this, 'authorize'],
             'permission_callback' => '__return_true',
         ]);
 
-        // Add User Public Key Route
+        // Initial Payload Route.
+        register_rest_route('blackhaven-messenger/v1', '/payload', [
+            'methods'  => 'GET',
+            'callback' => [$this, 'initial_payload'],
+            'permission_callback' => [$this, 'check_access_token'],
+        ]);
+
+        // Add User Public Key Route.
         register_rest_route('blackhaven-messenger/v1/keys', '/add', [
             'methods'  => 'POST',
             'callback' => [$this, 'add_user_key'],
             'permission_callback' => [$this, 'check_access_token'],
         ]);
 
-        // Get Users Route
+        // Get Users Route.
         register_rest_route('blackhaven-messenger/v1', '/users', [
             'methods'  => 'GET',
             'callback' => [$this, 'get_users'],
@@ -210,6 +225,61 @@ class BH_Messenger_REST {
             'expires' => $expires,
             'created' => $created,
             'user_data' => $user_info,
+        ];
+    }
+
+    /**
+     * Initial Payload Endpoint Method
+     * Initial Payload Endpoint Method
+     *
+     * @todo: Add in hook for additonal data to be added to the payload.
+     * @todo: Add in a hook for server version comparison to force updates and limit insecure server/client versions.
+     */
+    public function initial_payload($request) {
+        $params = $request->get_body_params();
+        if (empty($params)) {
+            $params = json_decode($request->get_body(), true) ?? [];
+        }
+        $user_id = intval($request->get_param('user_id'));
+
+        global $wpdb;
+
+        // Get users with a user key set
+        $user_keys_table = $wpdb->prefix . BH_TABLE_USER_KEYS;
+        $users = $wpdb->get_results("
+            SELECT u.ID, u.display_name, uk.public_key, uk.key_type, uk.expires_at
+            FROM {$wpdb->users} u
+            INNER JOIN {$user_keys_table} uk ON u.ID = uk.user_id
+            GROUP BY u.ID
+        ");
+
+        // Get conversations for the authenticated user
+        $conversations_table = $wpdb->prefix . BH_TABLE_CONVERSATIONS;
+        $conversation_members_table = $wpdb->prefix . BH_TABLE_CONVERSATION_MEMBERS;
+
+        $conversations = $wpdb->get_results($wpdb->prepare(
+            "SELECT c.* FROM {$conversations_table} c
+             JOIN {$conversation_members_table} cm ON c.ID = cm.conversation_id
+             WHERE cm.user_id = %d",
+            $user_id
+        ));
+
+        // For each conversation, get members and their keys
+        foreach ($conversations as &$conversation) {
+            $members = $wpdb->get_results($wpdb->prepare(
+                "SELECT u.ID, u.display_name, uk.public_key, uk.key_type, uk.expires_at
+                 FROM {$conversation_members_table} cm
+                 JOIN {$wpdb->users} u ON cm.user_id = u.ID
+                 LEFT JOIN {$user_keys_table} uk ON uk.user_id = u.ID
+                 WHERE cm.conversation_id = %d",
+                $conversation->ID
+            ));
+            $conversation->members = $members;
+        }
+
+        return [
+            'users' => $users,
+            'conversations' => $conversations
         ];
     }
 
