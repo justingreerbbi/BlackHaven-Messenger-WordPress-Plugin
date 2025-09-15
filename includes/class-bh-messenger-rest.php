@@ -264,12 +264,25 @@ class BH_Messenger_REST {
      * @todo: We need to add a way where the admin can allow which users are chat users.
      */
     public function get_users() {
-        $users = get_users();
+        global $wpdb;
+        $table = $wpdb->prefix . BH_TABLE_USER_KEYS;
+
+        // Get users who have a user_key assigned
+        $users = $wpdb->get_results("
+            SELECT u.ID, u.display_name, uk.public_key, uk.key_type, uk.expires_at
+            FROM {$wpdb->users} u
+            INNER JOIN {$table} uk ON u.ID = uk.user_id
+            GROUP BY u.ID
+        ");
+
         $user_list = [];
         foreach ($users as $user) {
             $user_list[] = [
-                'ID'       => (int) $user->ID,
-                'display_name' => $user->display_name,
+            'ID' => (int) $user->ID,
+            'display_name' => $user->display_name,
+            'public_key' => $user->public_key,
+            'key_type' => $user->key_type,
+            'expires_at' => $user->expires_at,
             ];
         }
         return $user_list;
