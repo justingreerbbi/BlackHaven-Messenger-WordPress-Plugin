@@ -160,6 +160,13 @@ class BH_Messenger_Options {
         echo "WordPress Version: {$wp_version}\n";
         echo "Site URL: " . esc_url(get_site_url()) . "\n";
         echo "Home URL: " . esc_url(get_home_url()) . "\n";
+        global $wp_rewrite;
+        $permalink_structure = $wp_rewrite->permalink_structure;
+        if (!empty($permalink_structure)) {
+            echo "Permalinks: Enabled (" . esc_html($permalink_structure) . ")\n";
+        } else {
+            echo "Permalinks: Default (Plain)\n";
+        }
         echo "PHP Version: {$php_version}\n";
         echo "Server Software: {$server_software}\n";
         echo "Active Theme: " . esc_html($theme->get('Name')) . "\n";
@@ -176,6 +183,28 @@ class BH_Messenger_Options {
             if (! in_array($plugin_file, $active_plugins, true)) {
                 echo "  - " . esc_html($plugin_data['Name']) . " (v" . esc_html($plugin_data['Version']) . ") by " . esc_html(wp_strip_all_tags($plugin_data['Author'])) . " [" . esc_html($plugin_file) . "]\n";
             }
+        }
+
+        echo "Plugin Database Table Information:\n";
+        global $wpdb;
+        $allowed_tables = [
+            BH_TABLE_ACCESS_TOKENS => 'Tokens',
+            BH_TABLE_CONVERSATIONS => 'Conversations',
+            BH_TABLE_CONVERSATION_MEMBERS => 'Conversation Members',
+            BH_TABLE_MESSAGES => 'Messages',
+            BH_TABLE_USER_KEYS => 'User Keys',
+            BH_TABLE_CONVERSATION_KEYS => 'Conversation Keys',
+        ];
+        foreach ($allowed_tables as $table_name => $table_label) {
+            $exists = $wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}{$table_name}'") === "{$wpdb->prefix}{$table_name}";
+            $size = 'N/A';
+            if ($exists) {
+                $table_status = $wpdb->get_row("SHOW TABLE STATUS LIKE '{$wpdb->prefix}{$table_name}'");
+                if ($table_status && isset($table_status->Data_length)) {
+                    $size = size_format($table_status->Data_length + $table_status->Index_length);
+                }
+            }
+            echo "  - {$table_label}: " . ($exists ? "Exists" : "Missing") . " (Size: {$size})\n";
         }
 ?>
             </pre>
