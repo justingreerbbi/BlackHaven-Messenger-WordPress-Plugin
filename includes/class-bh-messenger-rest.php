@@ -464,21 +464,6 @@ class BH_Messenger_REST {
             return new WP_Error('db_error', 'Failed to add members.', ['status' => 500]);
         }
 
-        // Again, we will not be sending the first message here. This is simply creating the conversation.
-        // Insert first message
-        //$message_inserted = $wpdb->insert(
-        //    $wpdb->prefix . BH_TABLE_MESSAGES,
-        //    [
-        //        'conversation_id' => $conversation_id,
-        //        'sender_id' => $creator_id,
-        //        'encrypted_text' => $encrypted_message
-        //    ]
-        //);
-
-        //if ($message_inserted === false) {
-        //    return new WP_Error('db_error', 'Failed to send message.', ['status' => 500]);
-        //}
-
         // @todo: Return conversation details like the user keys or do we rely on the client to already have everything needed.
         return [
             'success' => true,
