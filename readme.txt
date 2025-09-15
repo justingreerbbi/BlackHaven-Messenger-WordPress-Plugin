@@ -69,6 +69,8 @@ Submit an issue here in the GitHub repo for the time being.
 - Add ability to send notes to ones self (start conversations with self). Right now, it errors out.
 - Update API endpoints for starting a conversation to fall in line with conversations/private/start, etc and not endpoint hackery.
 - Add getting started guide on activation to guide the user on what to do to get started.
+- Audit usernames and display names for an email address. This is not recommended due to PII being exposed.
+- IMPORTANT: Look into masking the user ID with a hash as well to protect against ID leak and work around attacks already exposed in WP.
 
 ## License
 

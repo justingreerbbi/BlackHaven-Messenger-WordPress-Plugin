@@ -20,6 +20,14 @@ define('BH_MESSENGER_PLUGIN_VERSION', '1.0.0');
 define('BH_MESSENGER_DIR', plugin_dir_path(__FILE__));
 define('BH_DB_VERSION', '1.0');
 
+// Define Database Tables Constants
+define('BH_TABLE_ACCESS_TOKENS', 'bh_access_tokens');
+define('BH_TABLE_CONVERSATIONS', 'bh_conversations');
+define('BH_TABLE_CONVERSATION_MEMBERS', 'bh_conversation_members');
+define('BH_TABLE_MESSAGES', 'bh_messages');
+define('BH_TABLE_USER_KEYS', 'bh_user_keys');
+define('BH_TABLE_CONVERSATION_KEYS', 'bh_conversation_keys');
+
 // Redirect the user the the connection information screen on plugin activation.
 // Not sure if this is the best way to do this, but it seems to work. This is important for UX.
 add_action('activated_plugin', function ($plugin) {
@@ -53,12 +61,12 @@ function bh_messenger_activate() {
 
     global $wpdb;
     $charset_collate = $wpdb->get_charset_collate();
-    $access_token_table = $wpdb->prefix . 'access_tokens'; // @todo: Look at adding our own prefix to avoid conflicts.
-    $conversations_table = $wpdb->prefix . 'conversations';
-    $conversation_members_table = $wpdb->prefix . 'conversation_members';
-    $messages_table = $wpdb->prefix . 'messages';
-    $user_keys_table = $wpdb->prefix . 'user_keys';
-    $conversation_keys_table = $wpdb->prefix . 'conversation_keys';
+    $access_token_table = $wpdb->prefix . BH_TABLE_ACCESS_TOKENS; // @todo: Look at adding our own prefix to avoid conflicts.
+    $conversations_table = $wpdb->prefix . BH_TABLE_CONVERSATIONS;
+    $conversation_members_table = $wpdb->prefix . BH_TABLE_CONVERSATION_MEMBERS;
+    $messages_table = $wpdb->prefix . BH_TABLE_MESSAGES;
+    $user_keys_table = $wpdb->prefix . BH_TABLE_USER_KEYS;
+    $conversation_keys_table = $wpdb->prefix . BH_TABLE_CONVERSATION_KEYS;
 
     $sql1 = "CREATE TABLE $access_token_table (
         ID BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -146,12 +154,12 @@ function bh_messenger_deactivate() {
 
         // Remove all plugin tables.
         global $wpdb;
-        $access_token_table = $wpdb->prefix . 'access_tokens';
-        $conversations_table = $wpdb->prefix . 'conversations';
-        $conversation_members_table = $wpdb->prefix . 'conversation_members';
-        $messages_table = $wpdb->prefix . 'messages';
-        $user_keys_table = $wpdb->prefix . 'user_keys';
-        $conversation_keys_table = $wpdb->prefix . 'conversation_keys';
+        $access_token_table = $wpdb->prefix . BH_TABLE_ACCESS_TOKENS;
+        $conversations_table = $wpdb->prefix . BH_TABLE_CONVERSATIONS;
+        $conversation_members_table = $wpdb->prefix . BH_TABLE_CONVERSATION_MEMBERS;
+        $messages_table = $wpdb->prefix . BH_TABLE_MESSAGES;
+        $user_keys_table = $wpdb->prefix . BH_TABLE_USER_KEYS;
+        $conversation_keys_table = $wpdb->prefix . BH_TABLE_CONVERSATION_KEYS;
 
         // Note: The order of removal is important due to foreign key constraints. Took me forever to figure that out.
         // Drop tables in order to avoid foreign key constraint errors.

@@ -344,12 +344,12 @@ class BH_Messenger_Options {
         $total_users = isset($user_count['total_users']) ? intval($user_count['total_users']) : 0;
 
         // Users with a public key in the database
-        $users_with_public_key = $wpdb->get_results("SELECT user_id, public_key FROM {$wpdb->prefix}user_keys LIMIT 5");
+        $users_with_public_key = $wpdb->get_results("SELECT user_id, public_key FROM {$wpdb->prefix}" . BH_TABLE_USER_KEYS . " LIMIT 5");
 
         // Example: if you add your own messages table later
         $messages_count = 0;
-        if ($wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}bh_messenger_messages'") === "{$wpdb->prefix}bh_messenger_messages") {
-            $messages_count = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}bh_messenger_messages");
+        if ($wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}" . BH_TABLE_MESSAGES . "'") === "{$wpdb->prefix}" . BH_TABLE_MESSAGES) {
+            $messages_count = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}" . BH_TABLE_MESSAGES);
         }
     ?>
         <div class="wrap">

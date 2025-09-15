@@ -104,7 +104,7 @@ class BH_Messenger_REST {
         }
 
         global $wpdb;
-        $table = $wpdb->prefix . 'access_tokens';
+        $table = $wpdb->prefix . BH_TABLE_ACCESS_TOKENS;
         $current_time = date('Y-m-d H:i:s', current_time('timestamp'));
 
         $row = $wpdb->get_row($wpdb->prepare(
@@ -149,7 +149,7 @@ class BH_Messenger_REST {
         }
 
         global $wpdb;
-        $table = $wpdb->prefix . 'access_tokens';
+        $table = $wpdb->prefix . BH_TABLE_ACCESS_TOKENS;
 
         // Only allow one token per user.
         $wpdb->delete($table, ['user_id' => $user->ID]);
@@ -235,7 +235,7 @@ class BH_Messenger_REST {
         }
 
         global $wpdb;
-        $table = $wpdb->prefix . 'user_keys';
+        $table = $wpdb->prefix . BH_TABLE_USER_KEYS;
 
         // Insert or update the user key
         $insert = $wpdb->replace($table, [
@@ -285,12 +285,12 @@ class BH_Messenger_REST {
         $user_id = $request->get_param('user_id');
 
         global $wpdb;
-        $table = $wpdb->prefix . 'conversations';
+        $table = $wpdb->prefix . BH_TABLE_CONVERSATIONS;
 
         // Get conversations for the user
         $conversations = $wpdb->get_results($wpdb->prepare(
             "SELECT c.* FROM $table c
-            JOIN {$wpdb->prefix}conversation_members cm ON c.ID = cm.conversation_id
+            JOIN {$wpdb->prefix}" . BH_TABLE_CONVERSATION_MEMBERS . " cm ON c.ID = cm.conversation_id
             WHERE cm.user_id = %d",
             $user_id
         ));
@@ -300,9 +300,9 @@ class BH_Messenger_REST {
             // Get members
             $members = $wpdb->get_results($wpdb->prepare(
                 "SELECT u.ID, u.display_name, uk.public_key, uk.key_type, uk.expires_at
-             FROM {$wpdb->prefix}conversation_members cm
+             FROM {$wpdb->prefix}" . BH_TABLE_CONVERSATION_MEMBERS . " cm
              JOIN {$wpdb->prefix}users u ON cm.user_id = u.ID
-             LEFT JOIN {$wpdb->prefix}user_keys uk ON uk.user_id = u.ID
+             LEFT JOIN {$wpdb->prefix}" . BH_TABLE_USER_KEYS . " uk ON uk.user_id = u.ID
              WHERE cm.conversation_id = %d",
                 $conversation->ID
             ));
@@ -338,7 +338,7 @@ class BH_Messenger_REST {
 
         // Insert new conversation
         $insert_conversation = $wpdb->insert(
-            $wpdb->prefix . 'conversations',
+            $wpdb->prefix . BH_TABLE_CONVERSATIONS,
             [
                 'type' => 'private',
                 'created_by' => $creator_id
@@ -354,7 +354,7 @@ class BH_Messenger_REST {
         // Add both users to conversation_members
         $members_inserted = $wpdb->query(
             $wpdb->prepare(
-                "INSERT INTO {$wpdb->prefix}conversation_members (conversation_id, user_id) VALUES (%d, %d), (%d, %d)",
+                "INSERT INTO {$wpdb->prefix}" . BH_TABLE_CONVERSATION_MEMBERS . " (conversation_id, user_id) VALUES (%d, %d), (%d, %d)",
                 $conversation_id,
                 $creator_id,
                 $conversation_id,
@@ -368,7 +368,7 @@ class BH_Messenger_REST {
 
         // Insert first message
         $message_inserted = $wpdb->insert(
-            $wpdb->prefix . 'messages',
+            $wpdb->prefix . BH_TABLE_MESSAGES,
             [
                 'conversation_id' => $conversation_id,
                 'sender_id' => $creator_id,
@@ -424,7 +424,7 @@ class BH_Messenger_REST {
 
         // Insert new group conversation
         $insert_conversation = $wpdb->insert(
-            $wpdb->prefix . 'conversations',
+            $wpdb->prefix . BH_TABLE_CONVERSATIONS,
             [
                 'type' => 'group',
                 'created_by' => $creator_id
@@ -445,7 +445,7 @@ class BH_Messenger_REST {
         $values_sql = implode(',', $values);
 
         $members_inserted = $wpdb->query(
-            "INSERT INTO {$wpdb->prefix}conversation_members (conversation_id, user_id) VALUES $values_sql"
+            "INSERT INTO {$wpdb->prefix}" . BH_TABLE_CONVERSATION_MEMBERS . " (conversation_id, user_id) VALUES $values_sql"
         );
 
         if ($members_inserted === false) {
@@ -454,7 +454,7 @@ class BH_Messenger_REST {
 
         // Insert first group message
         $message_inserted = $wpdb->insert(
-            $wpdb->prefix . 'messages',
+            $wpdb->prefix . BH_TABLE_MESSAGES,
             [
                 'conversation_id' => $conversation_id,
                 'sender_id' => $creator_id,
@@ -496,7 +496,7 @@ class BH_Messenger_REST {
 
         // Be sure the sender is part of the conversation.
         $is_member = $wpdb->get_var($wpdb->prepare(
-            "SELECT conversation_id FROM {$wpdb->prefix}conversation_members WHERE conversation_id = %d AND user_id = %d",
+            "SELECT conversation_id FROM {$wpdb->prefix}" . BH_TABLE_CONVERSATION_MEMBERS . " WHERE conversation_id = %d AND user_id = %d",
             $conversation_id,
             $sender_id
         ));
@@ -516,7 +516,7 @@ class BH_Messenger_REST {
 
         // Insert the new message.
         $message_inserted = $wpdb->insert(
-            $wpdb->prefix . 'messages',
+            $wpdb->prefix . BH_TABLE_MESSAGES,
             [
                 'conversation_id' => $conversation_id,
                 'sender_id' => $sender_id,
