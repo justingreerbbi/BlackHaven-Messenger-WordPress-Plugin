@@ -11,6 +11,7 @@ Right now the plugin is in active development and is not ready for production.
 - Support for one-on-one communication.
 - Support for group communication.
 - Support for file transfers.
+- Support for RSA-4096 encryption.
 
 ## Installation
 

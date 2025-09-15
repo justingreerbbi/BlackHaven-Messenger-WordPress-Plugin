@@ -122,7 +122,7 @@ function bh_messenger_activate() {
     $sql6 = "CREATE TABLE $conversation_keys_table (
         conversation_id BIGINT UNSIGNED NOT NULL,
         user_id BIGINT UNSIGNED NOT NULL,
-        encrypted_key VARBINARY(512) NOT NULL,
+        encrypted_key VARBINARY(2048) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (conversation_id, user_id),
         FOREIGN KEY (conversation_id) REFERENCES {$wpdb->prefix}conversations(id),
