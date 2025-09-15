@@ -1,4 +1,5 @@
 <?php
+
 /**
  * BlackHaven Messenger REST API Class
  * Handles all REST API endpoints for the BlackHaven Messenger plugin.
@@ -253,7 +254,13 @@ class BH_Messenger_REST {
             GROUP BY u.ID
         ");
 
-        // Get conversations for the authenticated user
+        // Remove current user from the users list
+        // @todo: This does not seem to work as expected. Look into it.
+        $users = array_filter($users, function ($user) use ($user_id) {
+            return $user->ID !== $user_id;
+        });
+
+        // Get conversations for the authenticated user (do not expose user_id in response)
         $conversations_table = $wpdb->prefix . BH_TABLE_CONVERSATIONS;
         $conversation_members_table = $wpdb->prefix . BH_TABLE_CONVERSATION_MEMBERS;
 
@@ -348,11 +355,11 @@ class BH_Messenger_REST {
         $user_list = [];
         foreach ($users as $user) {
             $user_list[] = [
-            'ID' => (int) $user->ID,
-            'display_name' => $user->display_name,
-            'public_key' => $user->public_key,
-            'key_type' => $user->key_type,
-            'expires_at' => $user->expires_at,
+                'ID' => (int) $user->ID,
+                'display_name' => $user->display_name,
+                'public_key' => $user->public_key,
+                'key_type' => $user->key_type,
+                'expires_at' => $user->expires_at,
             ];
         }
         return $user_list;
@@ -411,9 +418,11 @@ class BH_Messenger_REST {
         }
         $creator_id = intval($request->get_param('user_id'));
         $other_user_id = intval($params['other_user_id'] ?? 0);
-        $encrypted_message = sanitize_text_field($params['encrypted_message'] ?? '');
 
-        if (!$creator_id || !$other_user_id || empty($encrypted_message)) {
+        // When starting a private conversation, we don't need the encrypted message just yet.
+        //$encrypted_message = sanitize_text_field($params['encrypted_message'] ?? '');
+
+        if (!$creator_id || !$other_user_id) {
             return new WP_Error('invalid_params', 'Missing required parameters.', ['status' => 400]);
         }
 
@@ -434,35 +443,43 @@ class BH_Messenger_REST {
 
         $conversation_id = $wpdb->insert_id;
 
-        // Add both users to conversation_members
-        $members_inserted = $wpdb->query(
-            $wpdb->prepare(
-                "INSERT INTO {$wpdb->prefix}" . BH_TABLE_CONVERSATION_MEMBERS . " (conversation_id, user_id) VALUES (%d, %d), (%d, %d)",
-                $conversation_id,
-                $creator_id,
-                $conversation_id,
-                $other_user_id
-            )
+        // Add both users to conversation_members using wpdb->insert
+        $members_inserted = true;
+        $members_inserted &= $wpdb->insert(
+            $wpdb->prefix . BH_TABLE_CONVERSATION_MEMBERS,
+            [
+                'conversation_id' => $conversation_id,
+                'user_id' => $creator_id
+            ]
+        );
+        $members_inserted &= $wpdb->insert(
+            $wpdb->prefix . BH_TABLE_CONVERSATION_MEMBERS,
+            [
+                'conversation_id' => $conversation_id,
+                'user_id' => $other_user_id
+            ]
         );
 
         if ($members_inserted === false) {
             return new WP_Error('db_error', 'Failed to add members.', ['status' => 500]);
         }
 
+        // Again, we will not be sending the first message here. This is simply creating the conversation.
         // Insert first message
-        $message_inserted = $wpdb->insert(
-            $wpdb->prefix . BH_TABLE_MESSAGES,
-            [
-                'conversation_id' => $conversation_id,
-                'sender_id' => $creator_id,
-                'encrypted_text' => $encrypted_message
-            ]
-        );
+        //$message_inserted = $wpdb->insert(
+        //    $wpdb->prefix . BH_TABLE_MESSAGES,
+        //    [
+        //        'conversation_id' => $conversation_id,
+        //        'sender_id' => $creator_id,
+        //        'encrypted_text' => $encrypted_message
+        //    ]
+        //);
 
-        if ($message_inserted === false) {
-            return new WP_Error('db_error', 'Failed to send message.', ['status' => 500]);
-        }
+        //if ($message_inserted === false) {
+        //    return new WP_Error('db_error', 'Failed to send message.', ['status' => 500]);
+        //}
 
+        // @todo: Return conversation details like the user keys or do we rely on the client to already have everything needed.
         return [
             'success' => true,
             'conversation_id' => $conversation_id
