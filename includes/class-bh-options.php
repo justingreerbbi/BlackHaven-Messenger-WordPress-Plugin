@@ -79,7 +79,7 @@ class BH_Messenger_Options {
         }
 
         $tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'basic';
-        ?>
+?>
         <div class="wrap">
             <h1><?php esc_html_e('BlackHaven Messenger Settings', 'blackhaven-messenger'); ?></h1>
 
@@ -87,16 +87,20 @@ class BH_Messenger_Options {
 
             <h2 class="nav-tab-wrapper">
                 <a href="<?php echo esc_url(admin_url('admin.php?page=' . $this->menu_slug . '&tab=basic')); ?>"
-                   class="nav-tab <?php echo $tab === 'basic' ? 'nav-tab-active' : ''; ?>">
-                   <?php esc_html_e('Basic', 'blackhaven-messenger'); ?>
+                    class="nav-tab <?php echo $tab === 'basic' ? 'nav-tab-active' : ''; ?>">
+                    <?php esc_html_e('Basic', 'blackhaven-messenger'); ?>
                 </a>
                 <a href="<?php echo esc_url(admin_url('admin.php?page=' . $this->menu_slug . '&tab=advanced')); ?>"
-                   class="nav-tab <?php echo $tab === 'advanced' ? 'nav-tab-active' : ''; ?>">
-                   <?php esc_html_e('Advanced', 'blackhaven-messenger'); ?>
+                    class="nav-tab <?php echo $tab === 'advanced' ? 'nav-tab-active' : ''; ?>">
+                    <?php esc_html_e('Advanced', 'blackhaven-messenger'); ?>
                 </a>
                 <a href="<?php echo esc_url(admin_url('admin.php?page=' . $this->menu_slug . '&tab=info')); ?>"
-                   class="nav-tab <?php echo $tab === 'info' ? 'nav-tab-active' : ''; ?>">
-                   <?php esc_html_e('Info', 'blackhaven-messenger'); ?>
+                    class="nav-tab <?php echo $tab === 'info' ? 'nav-tab-active' : ''; ?>">
+                    <?php esc_html_e('Info', 'blackhaven-messenger'); ?>
+                </a>
+                <a href="<?php echo esc_url(admin_url('admin.php?page=' . $this->menu_slug . '&tab=stats')); ?>"
+                    class="nav-tab <?php echo $tab === 'stats' ? 'nav-tab-active' : ''; ?>">
+                    <?php esc_html_e('Statistics', 'blackhaven-messenger'); ?>
                 </a>
             </h2>
 
@@ -110,13 +114,15 @@ class BH_Messenger_Options {
                     settings_fields($this->group_advanced);
                     do_settings_sections($this->screen_advanced);
                     submit_button();
+                } elseif ($tab === 'stats') {
+                    $this->render_statistics_tab();
                 } else {
                     $this->render_info_tab();
                 }
                 ?>
             </form>
         </div>
-        <?php
+    <?php
     }
 
     /* -----------------------------
@@ -144,51 +150,51 @@ class BH_Messenger_Options {
         }
 
         $all_plugins = get_plugins();
-        ?>
+    ?>
         <div style="background:#f9f9f9; border:1px solid #e1e1e1; border-radius:4px; padding:1em; position:relative; margin-top:1em;">
             <button type="button" id="bh-copy-sysinfo" style="position:absolute; top:1em; right:1em; background:#fff; border:1px solid #ccc; border-radius:3px; padding:4px 10px; cursor:pointer; font-size:13px;">
                 <?php esc_html_e('Copy', 'blackhaven-messenger'); ?>
             </button>
             <pre id="bh-sysinfo" style="background:none; border:none; margin-left:0; margin-top:0; margin-bottom:15px; font-size:12px; line-height:1.6; color:#222; white-space:pre-wrap;">
 <?php
-echo "WordPress Version: {$wp_version}\n";
-echo "Site URL: " . esc_url(get_site_url()) . "\n";
-echo "Home URL: " . esc_url(get_home_url()) . "\n";
-echo "PHP Version: {$php_version}\n";
-echo "Server Software: {$server_software}\n";
-echo "Active Theme: " . esc_html($theme->get('Name')) . "\n";
-echo "  Version: " . esc_html($theme->get('Version')) . "\n";
-echo "  Author: " . esc_html($theme->get('Author')) . "\n";
+        echo "WordPress Version: {$wp_version}\n";
+        echo "Site URL: " . esc_url(get_site_url()) . "\n";
+        echo "Home URL: " . esc_url(get_home_url()) . "\n";
+        echo "PHP Version: {$php_version}\n";
+        echo "Server Software: {$server_software}\n";
+        echo "Active Theme: " . esc_html($theme->get('Name')) . "\n";
+        echo "  Version: " . esc_html($theme->get('Version')) . "\n";
+        echo "  Author: " . esc_html($theme->get('Author')) . "\n";
 
-echo "Active Plugins:\n";
-foreach ($plugins_info as $plugin) {
-    echo "  - " . esc_html($plugin['Name']) . " (v" . esc_html($plugin['Version']) . ") by " . esc_html($plugin['Author']) . " [" . esc_html($plugin['Plugin']) . "]\n";
-}
+        echo "Active Plugins:\n";
+        foreach ($plugins_info as $plugin) {
+            echo "  - " . esc_html($plugin['Name']) . " (v" . esc_html($plugin['Version']) . ") by " . esc_html($plugin['Author']) . " [" . esc_html($plugin['Plugin']) . "]\n";
+        }
 
-echo "Inactive Plugins:\n";
-foreach ($all_plugins as $plugin_file => $plugin_data) {
-    if (! in_array($plugin_file, $active_plugins, true)) {
-        echo "  - " . esc_html($plugin_data['Name']) . " (v" . esc_html($plugin_data['Version']) . ") by " . esc_html(wp_strip_all_tags($plugin_data['Author'])) . " [" . esc_html($plugin_file) . "]\n";
-    }
-}
+        echo "Inactive Plugins:\n";
+        foreach ($all_plugins as $plugin_file => $plugin_data) {
+            if (! in_array($plugin_file, $active_plugins, true)) {
+                echo "  - " . esc_html($plugin_data['Name']) . " (v" . esc_html($plugin_data['Version']) . ") by " . esc_html(wp_strip_all_tags($plugin_data['Author'])) . " [" . esc_html($plugin_file) . "]\n";
+            }
+        }
 ?>
             </pre>
         </div>
         <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var btn = document.getElementById('bh-copy-sysinfo');
-            var pre = document.getElementById('bh-sysinfo');
-            btn.addEventListener('click', function() {
-                navigator.clipboard.writeText(pre.textContent).then(function() {
-                    btn.textContent = '<?php echo esc_js(__('Copied!', 'blackhaven-messenger')); ?>';
-                    setTimeout(function() {
-                        btn.textContent = '<?php echo esc_js(__('Copy', 'blackhaven-messenger')); ?>';
-                    }, 1200);
+            document.addEventListener('DOMContentLoaded', function() {
+                var btn = document.getElementById('bh-copy-sysinfo');
+                var pre = document.getElementById('bh-sysinfo');
+                btn.addEventListener('click', function() {
+                    navigator.clipboard.writeText(pre.textContent).then(function() {
+                        btn.textContent = '<?php echo esc_js(__('Copied!', 'blackhaven-messenger')); ?>';
+                        setTimeout(function() {
+                            btn.textContent = '<?php echo esc_js(__('Copy', 'blackhaven-messenger')); ?>';
+                        }, 1200);
+                    });
                 });
             });
-        });
         </script>
-        <?php
+    <?php
     }
 
     /* -----------------------------
@@ -206,7 +212,7 @@ foreach ($all_plugins as $plugin_file => $plugin_data) {
             'version' => '1.0.0',
         ];
         $json_data = wp_json_encode($connection_data);
-        ?>
+    ?>
         <div class="wrap">
             <h1><?php esc_html_e('Connection Information', 'blackhaven-messenger'); ?></h1>
             <p><?php esc_html_e('Scan this QR code in the mobile app to connect:', 'blackhaven-messenger'); ?></p>
@@ -215,24 +221,25 @@ foreach ($all_plugins as $plugin_file => $plugin_data) {
             <p><strong><?php esc_html_e('Server URL:', 'blackhaven-messenger'); ?></strong>
                 <?php echo esc_html($server_url); ?></p>
             <p><strong><?php esc_html_e('Raw JSON:', 'blackhaven-messenger'); ?></strong>
-                <code><?php echo esc_html($json_data); ?></code></p>
+                <code><?php echo esc_html($json_data); ?></code>
+            </p>
         </div>
 
         <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof QRCode !== 'undefined') {
-                new QRCode(document.getElementById("bh-qr-code"), {
-                    text: <?php echo wp_json_encode($json_data); ?>,
-                    width: 200,
-                    height: 200,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-            }
-        });
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof QRCode !== 'undefined') {
+                    new QRCode(document.getElementById("bh-qr-code"), {
+                        text: <?php echo wp_json_encode($json_data); ?>,
+                        width: 200,
+                        height: 200,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                }
+            });
         </script>
-        <?php
+    <?php
     }
 
     /* -----------------------------
@@ -285,44 +292,117 @@ foreach ($all_plugins as $plugin_file => $plugin_data) {
     public function render_api_enabled_option() {
         $options = get_option($this->opt_basic, []);
         $checked = !empty($options['enable_api']) ? 'checked' : '';
-        ?>
+    ?>
         <label>
             <input type="checkbox" name="<?php echo esc_attr($this->opt_basic); ?>[enable_api]" value="1" <?php echo $checked; ?> />
             <?php esc_html_e('Enable API access', 'blackhaven-messenger'); ?>
         </label>
-        <?php
+    <?php
     }
 
     public function render_advanced_access_token_lifetime() {
         $options = get_option($this->opt_advanced, []);
         $value = isset($options['access_token_lifetime']) ? intval($options['access_token_lifetime']) : 30;
-        ?>
+    ?>
         <input type="number"
-               name="<?php echo esc_attr($this->opt_advanced); ?>[access_token_lifetime]"
-               value="<?php echo esc_attr($value); ?>"
-               min="0" /> <?php esc_html_e('seconds (never expire 0)', 'blackhaven-messenger'); ?>
-        <?php
+            name="<?php echo esc_attr($this->opt_advanced); ?>[access_token_lifetime]"
+            value="<?php echo esc_attr($value); ?>"
+            min="0" /> <?php esc_html_e('seconds (never expire 0)', 'blackhaven-messenger'); ?>
+    <?php
     }
 
     public function render_advanced_remove_data_on_deactivation() {
         $options = get_option($this->opt_advanced, []);
         $checked = !empty($options['remove_data_on_deactivation']) ? 'checked' : '';
-        ?>
+    ?>
         <label>
             <input type="checkbox" name="<?php echo esc_attr($this->opt_advanced); ?>[remove_data_on_deactivation]" value="1" <?php echo $checked; ?> />
             <?php esc_html_e('Remove all plugin data on deactivation (including access tokens)', 'blackhaven-messenger'); ?>
         </label>
-        <?php
+    <?php
     }
 
     public function render_advanced_debug() {
         $options = get_option($this->opt_advanced, []);
         $checked = !empty($options['debug']) ? 'checked' : '';
-        ?>
+    ?>
         <label>
             <input type="checkbox" name="<?php echo esc_attr($this->opt_advanced); ?>[debug]" value="1" <?php echo $checked; ?> />
             <?php esc_html_e('Enable Debug Mode', 'blackhaven-messenger'); ?>
         </label>
-        <?php
+    <?php
+    }
+
+    /* -----------------------------
+ * Statistics Tab
+ * ---------------------------*/
+    private function render_statistics_tab() {
+        global $wpdb;
+
+        // Registered users
+        $user_count = count_users();
+        $total_users = isset($user_count['total_users']) ? intval($user_count['total_users']) : 0;
+
+        // Users with a public key in the database
+        $users_with_public_key = $wpdb->get_results("SELECT user_id, public_key FROM {$wpdb->prefix}user_keys LIMIT 5");
+
+        // Example: if you add your own messages table later
+        $messages_count = 0;
+        if ($wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}bh_messenger_messages'") === "{$wpdb->prefix}bh_messenger_messages") {
+            $messages_count = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}bh_messenger_messages");
+        }
+    ?>
+        <div class="wrap">
+            <h2><?php esc_html_e('Messenger Statistics', 'blackhaven-messenger'); ?></h2>
+            <table class="widefat striped" style="max-width:600px;">
+                <thead>
+                    <tr>
+                        <th><?php esc_html_e('Metric', 'blackhaven-messenger'); ?></th>
+                        <th><?php esc_html_e('Value', 'blackhaven-messenger'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><?php esc_html_e('Total Users', 'blackhaven-messenger'); ?></td>
+                        <td><?php echo esc_html($total_users); ?></td>
+                    </tr>
+                    <tr>
+                        <td><?php esc_html_e('Synced Identities', 'blackhaven-messenger'); ?></td>
+                        <td><?php echo esc_html(count($users_with_public_key)); ?></td>
+                    </tr>
+                    <tr>
+                        <td><?php esc_html_e('Approved Comments', 'blackhaven-messenger'); ?></td>
+                        <td><?php echo esc_html($comment_count); ?></td>
+                    </tr>
+                    <tr>
+                        <td><?php esc_html_e('Messenger Messages', 'blackhaven-messenger'); ?></td>
+                        <td><?php echo esc_html($messages_count); ?></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <table class="widefat striped" style="max-width:600px; margin-top: 2em;">
+                <thead>
+                    <tr>
+                        <th><?php esc_html_e('User', 'blackhaven-messenger'); ?></th>
+                        <th><?php esc_html_e('Key', 'blackhaven-messenger'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    foreach ($users_with_public_key as $row) {
+                    ?>
+                        <tr>
+                            <td><?php echo esc_html($row->user_id); ?></td>
+                            <td><?php echo esc_html($row->public_key); ?></td>
+                        </tr>
+                    <?php
+                    }
+                    ?>
+                </tbody>
+            </table>
+
+        </div>
+<?php
     }
 }
