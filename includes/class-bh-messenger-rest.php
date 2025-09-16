@@ -273,15 +273,44 @@ class BH_Messenger_REST {
 
         // For each conversation, get members and their keys
         foreach ($conversations as &$conversation) {
+            // Get members
             $members = $wpdb->get_results($wpdb->prepare(
                 "SELECT u.ID, u.display_name, uk.public_key, uk.key_type, uk.expires_at
-                 FROM {$conversation_members_table} cm
-                 JOIN {$wpdb->users} u ON cm.user_id = u.ID
-                 LEFT JOIN {$user_keys_table} uk ON uk.user_id = u.ID
-                 WHERE cm.conversation_id = %d",
+             FROM {$conversation_members_table} cm
+             JOIN {$wpdb->users} u ON cm.user_id = u.ID
+             LEFT JOIN {$user_keys_table} uk ON uk.user_id = u.ID
+             WHERE cm.conversation_id = %d",
                 $conversation->ID
             ));
             $conversation->members = $members;
+
+            // Get latest message
+            $latest_message = $wpdb->get_row($wpdb->prepare(
+                "SELECT m.ID, m.sender_id, m.encrypted_text, m.created_at
+             FROM {$wpdb->prefix}" . BH_TABLE_MESSAGES . " m
+             WHERE m.conversation_id = %d
+             ORDER BY m.created_at DESC, m.ID DESC
+             LIMIT 1",
+                $conversation->ID
+            ));
+            $conversation->latest_message = $latest_message;
+
+            $conversation->chat_name = '';
+            if ($conversation->type === 'private' && count($members) === 2) {
+
+                // For private chats, set the chat name to the other user's display name
+                foreach ($members as $member) {
+                    if ((int)$member->ID !== (int)$user_id) {
+                        $conversation->chat_name = $member->display_name;
+                        break;
+                    }
+                }
+            } elseif ($conversation->type === 'group') {
+
+                // @todo: Give every member the ability to set a group chat name.
+                // For group chats, we can set a default name or leave it blank for now
+                $conversation->chat_name = 'Group Chat';
+            }
         }
 
         return [
