@@ -72,6 +72,9 @@ Submit an issue here in the GitHub repo for the time being.
 - Add getting started guide on activation to guide the user on what to do to get started.
 - Audit usernames and display names for an email address. This is not recommended due to PII being exposed.
 - IMPORTANT: Look into masking the user ID with a hash as well to protect against ID leak and work around attacks already exposed in WP.
+- Send push to user when a user creates a conversation with them.
+- Hide all endpoints and make sure they are not visible and or respond with a 404 unless a valid identify is provided.
+- Can we use a zero trust proxy and custom API instead of WP-JSON?
 
 ## License
 

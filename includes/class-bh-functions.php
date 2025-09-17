@@ -20,6 +20,91 @@ class BH_Functions {
     }
 
     /**
+     * Delete a conversation and all its related data.
+     * 
+     * @todo Look into a way so that this is can not be called by any user for any conversation. Check the access token or is admin?
+     */
+    public function delete_conversation($conversation_id) {
+        global $wpdb;
+
+        if (!is_numeric($conversation_id)) {
+            return false;
+        }
+        // Delete messages related to the conversation
+        try {
+            $wpdb->delete(
+                BH_TABLE_MESSAGES,
+                array('conversation_id' => $conversation_id),
+                array('%d')
+            );
+        } catch (Exception $e) {
+            // Handle error if needed
+        }
+
+        // Delete participants related to the conversation
+        try {
+            $wpdb->delete(
+                BH_TABLE_CONVERSATION_MEMBERS,
+                array('conversation_id' => $conversation_id),
+                array('%d')
+            );
+        } catch (Exception $e) {
+            // Handle error if needed
+        }
+
+        // Delete the conversation itself
+        try {
+            $wpdb->delete(
+                BH_TABLE_CONVERSATIONS,
+                array('ID' => $conversation_id),
+                array('%d')
+            );
+        } catch (Exception $e) {
+            // Handle error if needed
+        }
+
+        return true;
+    }
+
+    /**
+     * Delete all conversations and related data.
+     * Protected so that only admins can call this function.
+     * 
+     * @return bool True on success, false on failure.
+     */
+    public function delete_all_conversations() {
+        global $wpdb;
+
+        // This can allow be called by an admin or someone with manage_options capability
+        if (!user_can('manage_options')) {
+            return false;
+        }
+
+        // Delete all messages
+        try {
+            $wpdb->query("DELETE FROM " . BH_TABLE_MESSAGES);
+        } catch (Exception $e) {
+            // Handle error if needed
+        }
+
+        // Delete all conversation members
+        try {
+            $wpdb->query("DELETE FROM " . BH_TABLE_CONVERSATION_MEMBERS);
+        } catch (Exception $e) {
+            // Handle error if needed
+        }
+
+        // Delete all conversations
+        try {
+            $wpdb->query("DELETE FROM " . BH_TABLE_CONVERSATIONS);
+        } catch (Exception $e) {
+            // Handle error if needed
+        }
+
+        return true;
+    }
+
+    /**
      * Generate a random access token.
      *
      * @param int $length Length of the token to generate.
