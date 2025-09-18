@@ -29,7 +29,7 @@ class BH_Messenger_REST {
 
         // Initial Payload Route.
         register_rest_route('blackhaven-messenger/v1', '/payload', [
-            'methods'  => 'GET',
+            'methods'  => 'POST',
             'callback' => [$this, 'initial_payload'],
             'permission_callback' => [$this, 'check_access_token'],
         ]);
@@ -43,14 +43,14 @@ class BH_Messenger_REST {
 
         // Get Users Route.
         register_rest_route('blackhaven-messenger/v1', '/users', [
-            'methods'  => 'GET',
+            'methods'  => 'POST',
             'callback' => [$this, 'get_users'],
             'permission_callback' => [$this, 'check_access_token'],
         ]);
 
         // Get Conversations Route
         register_rest_route('blackhaven-messenger/v1', '/conversations', [
-            'methods'  => 'GET',
+            'methods'  => 'POST',
             'callback' => [$this, 'get_conversations'],
             'permission_callback' => [$this, 'check_access_token'],
         ]);
@@ -67,6 +67,20 @@ class BH_Messenger_REST {
             'methods'  => 'POST',
             'callback' => [$this, 'start_group_conversation'],
             'permission_callback' => [$this, 'check_access_token'],
+        ]);
+
+        // Get Conversation Messages Route
+        register_rest_route('blackhaven-messenger/v1/conversations/', '/get-messages', [
+            'methods'  => 'POST',
+            'callback' => [$this, 'get_conversation_messages'],
+            'permission_callback' => [$this, 'check_access_token'],
+            'args' => [
+                'conversation_id' => [
+                    'validate_callback' => function ($param, $request, $key) {
+                        return is_numeric($param) && intval($param) > 0;
+                    }
+                ]
+            ]
         ]);
 
         // Send Message Route
@@ -430,6 +444,68 @@ class BH_Messenger_REST {
         }
 
         return $conversations;
+    }
+
+    /**
+     * Get messages for a specific conversation.
+     *
+     * @todo: Add pagination to limit the number of messages returned at once.
+     *
+     * @param WP_REST_Request $request
+     * @return array|WP_Error
+     */
+    public function get_conversation_messages($request) {
+
+        $user_id = $request->get_param('user_id');
+        $conversation_id = $request->get_param('conversation_id');
+
+        if (empty($conversation_id) || !is_numeric($conversation_id) || intval($conversation_id) <= 0 || empty($user_id) || !is_numeric($user_id) || intval($user_id) <= 0) {
+            return new WP_Error('invalid_request', 'Missing or invalid parameters.', ['status' => 400]);
+        }
+
+        global $wpdb;
+
+        // Check if user is a member of the conversation
+        $is_member = $wpdb->get_var($wpdb->prepare(
+            "SELECT conversation_id FROM {$wpdb->prefix}" . BH_TABLE_CONVERSATION_MEMBERS . " WHERE conversation_id = %d AND user_id = %d",
+            $conversation_id,
+            $user_id
+        ));
+
+        if (!$is_member) {
+            return new WP_Error('not_a_member', 'You are not a member of this conversation.', ['status' => 403]);
+        }
+
+        // Get messages for the conversation
+        $messages = $wpdb->get_results($wpdb->prepare(
+            "SELECT m.* FROM {$wpdb->prefix}" . BH_TABLE_MESSAGES . " m
+            WHERE m.conversation_id = %d",
+            $conversation_id
+        ));
+
+        // Get conversation data
+        $conversation = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}" . BH_TABLE_CONVERSATIONS . " WHERE ID = %d",
+            $conversation_id
+        ));
+
+        // Get members and their public keys
+        $members = $wpdb->get_results($wpdb->prepare(
+            "SELECT u.ID, u.display_name, uk.public_key, uk.key_type, uk.expires_at
+             FROM {$wpdb->prefix}" . BH_TABLE_CONVERSATION_MEMBERS . " cm
+             JOIN {$wpdb->users} u ON cm.user_id = u.ID
+             LEFT JOIN {$wpdb->prefix}" . BH_TABLE_USER_KEYS . " uk ON uk.user_id = u.ID
+             WHERE cm.conversation_id = %d",
+            $conversation_id
+        ));
+
+        return [
+            'conversation' => $conversation,
+            'members' => $members,
+            'messages' => $messages
+        ];
+
+        return $messages;
     }
 
     /**
