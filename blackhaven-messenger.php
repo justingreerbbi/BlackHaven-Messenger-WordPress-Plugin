@@ -85,6 +85,7 @@ function bh_messenger_activate() {
         type ENUM('private','group') NOT NULL,
         created_by BIGINT UNSIGNED NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        session_key VARBINARY(2048) DEFAULT NULL,
         FOREIGN KEY (created_by) REFERENCES {$wpdb->prefix}users(ID)
     ) $charset_collate;";
 
@@ -196,7 +197,7 @@ require_once BH_MESSENGER_DIR . 'includes/class-bh-functions.php';      // Plugi
 require_once BH_MESSENGER_DIR . 'includes/class-bh-options.php';        // Options Page Class
 require_once BH_MESSENGER_DIR . 'includes/class-bh-messenger-rest.php'; // REST API Class
 require_once BH_MESSENGER_DIR . 'includes/class-bh-security-audit.php'; // Security Audit Class
-require_once BH_MESSENGER_DIR . 'includes/class-bh-cronjobs.php';
+//require_once BH_MESSENGER_DIR . 'includes/class-bh-cronjobs.php';
 
 // -------- Bootstrap the functions singleton --------
 add_action('plugins_loaded', 'bhm_bootstrap_functions_singleton', 5);

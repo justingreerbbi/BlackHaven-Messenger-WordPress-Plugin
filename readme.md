@@ -23,8 +23,8 @@ A WordPress plugin that adds messaging functionality to your BlackHaven site.
 
 ## Requirements
 
--   WordPress 5.0+
--   PHP 7.4+
+-   WordPress 6.8+
+-   PHP 8.2+
 
 ## Frequently Asked Question
 

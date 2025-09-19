@@ -400,10 +400,6 @@ class BH_Messenger_Options {
                         <td><?php echo esc_html(count($users_with_public_key)); ?></td>
                     </tr>
                     <tr>
-                        <td><?php esc_html_e('Approved Comments', 'blackhaven-messenger'); ?></td>
-                        <td><?php echo esc_html($comment_count); ?></td>
-                    </tr>
-                    <tr>
                         <td><?php esc_html_e('Messenger Messages', 'blackhaven-messenger'); ?></td>
                         <td><?php echo esc_html($messages_count); ?></td>
                     </tr>

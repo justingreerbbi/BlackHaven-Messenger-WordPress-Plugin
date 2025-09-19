@@ -641,7 +641,11 @@ class BH_Security_Audit {
         // normalize header keys to lowercase
         $h = [];
         foreach ((array) $headers as $k => $v) {
-            $h[strtolower($k)] = is_array($v) ? implode(', ', $v) : $v;
+            if (is_array($v)) {
+                $h[strtolower($k)] = implode(', ', $v);
+            } else {
+                $h[strtolower($k)] = (string) $v;
+            }
         }
 
         $location = $h['location'] ?? '';

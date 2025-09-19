@@ -1,4 +1,5 @@
 <?php
+
 /**
  * BlackHaven Messenger Cron Jobs
  * Handles scheduled tasks for the BlackHaven Messenger plugin.

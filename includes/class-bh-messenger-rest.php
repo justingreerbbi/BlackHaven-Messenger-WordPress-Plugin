@@ -84,7 +84,7 @@ class BH_Messenger_REST {
         ]);
 
         // Send Message Route
-        register_rest_route('blackhaven-messenger/v1/conversations/', '/(?P<conversation_id>\d+)/send', [
+        register_rest_route('blackhaven-messenger/v1/conversations/', '/send-message', [
             'methods'  => 'POST',
             'callback' => [$this, 'send_message'],
             'permission_callback' => [$this, 'check_access_token'],
@@ -523,9 +523,7 @@ class BH_Messenger_REST {
         }
         $creator_id = intval($request->get_param('user_id'));
         $other_user_id = intval($params['other_user_id'] ?? 0);
-
-        // When starting a private conversation, we don't need the encrypted message just yet.
-        //$encrypted_message = sanitize_text_field($params['encrypted_message'] ?? '');
+        $encrypted_session_key = sanitize_text_field($params['encrypted_session_key'] ?? '');
 
         if (!$creator_id || !$other_user_id) {
             return new WP_Error('invalid_params', 'Missing required parameters.', ['status' => 400]);
@@ -538,7 +536,8 @@ class BH_Messenger_REST {
             $wpdb->prefix . BH_TABLE_CONVERSATIONS,
             [
                 'type' => 'private',
-                'created_by' => $creator_id
+                'created_by' => $creator_id,
+                'session_key' => $encrypted_session_key
             ]
         );
 
@@ -676,9 +675,9 @@ class BH_Messenger_REST {
         }
         $conversation_id = intval($request->get_param('conversation_id')); // Grab the conversation from the url
         $sender_id = intval($request->get_param('user_id'));
-        $encrypted_message = sanitize_text_field($params['encrypted_message'] ?? '');
+        $message = sanitize_text_field($params['message'] ?? '');
 
-        if (!$conversation_id || !$sender_id || empty($encrypted_message)) {
+        if (!$conversation_id || !$sender_id || empty($message)) {
             return new WP_Error('invalid_params', 'Missing required parameters.', ['status' => 400]);
         }
 
