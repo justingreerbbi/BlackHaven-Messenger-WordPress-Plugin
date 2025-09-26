@@ -102,7 +102,8 @@ function bh_messenger_activate() {
         id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         conversation_id BIGINT UNSIGNED NOT NULL,
         sender_id BIGINT UNSIGNED NOT NULL,
-        encrypted_text TEXT,
+        message_text TEXT,
+        nonce VARCHAR(100) NOT NULL,
         file_path VARCHAR(255) DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (conversation_id) REFERENCES {$wpdb->prefix}conversations(ID),
@@ -112,11 +113,12 @@ function bh_messenger_activate() {
 
     $sql5 = "CREATE TABLE $user_keys_table (
         user_id BIGINT UNSIGNED NOT NULL,
-        public_key VARBINARY(2048) NOT NULL,
-        key_type ENUM('identity', 'signed_prekey', 'one_time_prekey') DEFAULT 'identity',
+        ik_pub_b64 CHAR(44) NOT NULL,
+        sig_pub_b64 CHAR(44) NOT NULL,
+        spk_pub_b64 CHAR(44) NOT NULL,
+        spk_sig_b64 TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        expires_at TIMESTAMP NULL DEFAULT NULL,
-        PRIMARY KEY (user_id, key_type),
+        PRIMARY KEY (user_id),
         FOREIGN KEY (user_id) REFERENCES {$wpdb->prefix}users(ID) ON DELETE CASCADE
     ) $charset_collate;";
 

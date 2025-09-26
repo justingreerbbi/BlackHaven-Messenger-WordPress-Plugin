@@ -35,9 +35,9 @@ class BH_Messenger_REST {
         ]);
 
         // Add User Public Key Route.
-        register_rest_route('blackhaven-messenger/v1/keys', '/add', [
+        register_rest_route('blackhaven-messenger/v1/identity', '/sync', [
             'methods'  => 'POST',
-            'callback' => [$this, 'add_user_key'],
+            'callback' => [$this, 'add_user_keys'],
             'permission_callback' => [$this, 'check_access_token'],
         ]);
 
@@ -262,9 +262,9 @@ class BH_Messenger_REST {
         // Get users with a user key set
         $user_keys_table = $wpdb->prefix . BH_TABLE_USER_KEYS;
         $users = $wpdb->get_results("
-            SELECT u.ID, u.display_name, uk.public_key, uk.key_type, uk.expires_at
-            FROM {$wpdb->users} u
-            INNER JOIN {$user_keys_table} uk ON u.ID = uk.user_id
+            SELECT u.ID, u.display_name, uk.ik_pub_b64, uk.sig_pub_b64, uk.spk_pub_b64, uk.spk_sig_b64
+            FROM {$user_keys_table} uk
+            INNER JOIN {$wpdb->users} u ON u.ID = uk.user_id
             GROUP BY u.ID
         ");
 
@@ -340,17 +340,22 @@ class BH_Messenger_REST {
      * @param WP_REST_Request $request
      * @return array|WP_Error
      */
-    public function add_user_key($request) {
+    public function add_user_keys($request) {
         $params = $request->get_body_params();
         if (empty($params)) {
             $params = json_decode($request->get_body(), true) ?? [];
         }
+
         $user_id = intval($params['user_id'] ?? 0);
-        $public_key = $params['public_key'] ?? '';
+        $ik_pub  = sanitize_text_field($params['ik_pub_b64']);
+        $sig_pub = sanitize_text_field($params['sig_pub_b64']);
+        $spk_pub = sanitize_text_field($params['spk_pub_b64']);
+        $spk_sig = sanitize_text_field($params['spk_sig_b64']);
+
         $key_type = $params['key_type'] ?? 'identity';
         $expires_at = isset($params['expires_at']) ? date('Y-m-d H:i:s', strtotime($params['expires_at'])) : null;
 
-        if (!$user_id || empty($public_key)) {
+        if (!$user_id || empty($ik_pub) || empty($sig_pub) || empty($spk_pub) || empty($spk_sig)) {
             return new WP_Error('invalid_params', 'Missing required parameters.', ['status' => 400]);
         }
 
@@ -360,9 +365,10 @@ class BH_Messenger_REST {
         // Insert or update the user key
         $insert = $wpdb->replace($table, [
             'user_id' => $user_id,
-            'public_key' => $public_key,
-            'key_type' => $key_type,
-            'expires_at' => $expires_at,
+            'ik_pub_b64'   => $ik_pub,
+            'sig_pub_b64'  => $sig_pub,
+            'spk_pub_b64'  => $spk_pub,
+            'spk_sig_b64'  => $spk_sig,
         ]);
 
         if ($insert === false) {
@@ -371,10 +377,7 @@ class BH_Messenger_REST {
 
         return [
             'success' => true,
-            'user_id' => $user_id,
-            'public_key' => $public_key,
-            'key_type' => $key_type,
-            'expires_at' => $expires_at,
+            'user_id' => $user_id
         ];
     }
 
@@ -521,9 +524,10 @@ class BH_Messenger_REST {
         if (empty($params)) {
             $params = json_decode($request->get_body(), true) ?? [];
         }
+
         $creator_id = intval($request->get_param('user_id'));
         $other_user_id = intval($params['other_user_id'] ?? 0);
-        $encrypted_session_key = sanitize_text_field($params['encrypted_session_key'] ?? '');
+        $encrypted_session_key = sanitize_text_field($params['encrypted_session_key']);
 
         if (!$creator_id || !$other_user_id) {
             return new WP_Error('invalid_params', 'Missing required parameters.', ['status' => 400]);
@@ -547,16 +551,16 @@ class BH_Messenger_REST {
 
         $conversation_id = $wpdb->insert_id;
 
-        // Add both users to conversation_members using wpdb->insert
-        $members_inserted = true;
-        $members_inserted &= $wpdb->insert(
+        // Add the members to the conversation
+        // @todo - Look at a better way to add multiple members to keep the query efficient and clean.
+        $members_inserted = $wpdb->insert(
             $wpdb->prefix . BH_TABLE_CONVERSATION_MEMBERS,
             [
                 'conversation_id' => $conversation_id,
                 'user_id' => $creator_id
             ]
         );
-        $members_inserted &= $wpdb->insert(
+        $members_inserted = $wpdb->insert(
             $wpdb->prefix . BH_TABLE_CONVERSATION_MEMBERS,
             [
                 'conversation_id' => $conversation_id,
@@ -564,9 +568,10 @@ class BH_Messenger_REST {
             ]
         );
 
-        if ($members_inserted === false) {
-            return new WP_Error('db_error', 'Failed to add members.', ['status' => 500]);
-        }
+        // @todo - Clean this up. We need to ensure error handling is correct and efficient.
+        //if ($members_inserted === false) {
+        //    return new WP_Error('db_error', 'Failed to add members.', ['status' => 500]);
+        //}
 
         // @todo: Return conversation details like the user keys or do we rely on the client to already have everything needed.
         return [
@@ -673,11 +678,13 @@ class BH_Messenger_REST {
         if (empty($params)) {
             $params = json_decode($request->get_body(), true) ?? [];
         }
+
         $conversation_id = intval($request->get_param('conversation_id')); // Grab the conversation from the url
         $sender_id = intval($request->get_param('user_id'));
         $message = sanitize_text_field($params['message'] ?? '');
+        $nonce = sanitize_text_field($params['nonce'] ?? '');
 
-        if (!$conversation_id || !$sender_id || empty($message)) {
+        if (!$conversation_id || !$sender_id || empty($message) || empty($nonce)) {
             return new WP_Error('invalid_params', 'Missing required parameters.', ['status' => 400]);
         }
 
@@ -709,7 +716,8 @@ class BH_Messenger_REST {
             [
                 'conversation_id' => $conversation_id,
                 'sender_id' => $sender_id,
-                'encrypted_text' => $encrypted_message
+                'message_text' => $message,
+                'nonce' => $nonce
             ]
         );
 

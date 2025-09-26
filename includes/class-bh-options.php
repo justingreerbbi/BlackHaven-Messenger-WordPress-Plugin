@@ -373,7 +373,7 @@ class BH_Messenger_Options {
         $total_users = isset($user_count['total_users']) ? intval($user_count['total_users']) : 0;
 
         // Users with a public key in the database
-        $users_with_public_key = $wpdb->get_results("SELECT user_id, public_key FROM {$wpdb->prefix}" . BH_TABLE_USER_KEYS . " LIMIT 5");
+        $users_with_public_key = $wpdb->get_results("SELECT user_id FROM {$wpdb->prefix}" . BH_TABLE_USER_KEYS);
 
         // Example: if you add your own messages table later
         $messages_count = 0;
