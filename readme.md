@@ -40,6 +40,9 @@ A. Yes, conversations are indeed store on the system, however they are encrypted
 Q. Is the encryption used Post-Quantum Computing resilient?
 A. As of now, no. While the clients use crazy strong encryption, it is not ready for PQC. We are exploring options to implement PQC safe encryption.
 
+Q. When a message is deleted, does it remove it from all that I sent it to?
+A. Yes. When a message or conversation is removed, it will be removed for all people involved as well as removed from the server.
+
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
