@@ -132,6 +132,7 @@ class BH_Messenger_Options {
         global $wp_version;
         $theme          = wp_get_theme();
         $php_version    = phpversion();
+        $mysql_version  = $GLOBALS['wpdb']->db_version();
         $server_software = isset($_SERVER['SERVER_SOFTWARE']) ? sanitize_text_field(wp_unslash($_SERVER['SERVER_SOFTWARE'])) : 'Unknown';
 
         $active_plugins = get_option('active_plugins', []);
@@ -168,6 +169,7 @@ class BH_Messenger_Options {
             echo "Permalinks: Default (Plain)\n";
         }
         echo "PHP Version: {$php_version}\n";
+        echo "MySQL Version: {$mysql_version}\n";
         echo "Server Software: {$server_software}\n";
         echo "Active Theme: " . esc_html($theme->get('Name')) . "\n";
         echo "  Version: " . esc_html($theme->get('Version')) . "\n";
