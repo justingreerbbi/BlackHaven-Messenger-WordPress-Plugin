@@ -102,6 +102,10 @@ class BH_Messenger_Options {
                     class="nav-tab <?php echo $tab === 'stats' ? 'nav-tab-active' : ''; ?>">
                     <?php esc_html_e('Statistics', 'blackhaven-messenger'); ?>
                 </a>
+                <a href="<?php echo esc_url(admin_url('admin.php?page=' . $this->menu_slug . '&tab=developer')); ?>"
+                    class="nav-tab <?php echo $tab === 'developer' ? 'nav-tab-active' : ''; ?>">
+                    <?php esc_html_e('Developer', 'blackhaven-messenger'); ?>
+                </a>
             </h2>
 
             <form method="post" action="options.php">
@@ -116,6 +120,8 @@ class BH_Messenger_Options {
                     submit_button();
                 } elseif ($tab === 'stats') {
                     $this->render_statistics_tab();
+                } elseif ($tab === 'developer') {
+                    $this->render_developer_page();
                 } else {
                     $this->render_info_tab();
                 }
@@ -270,6 +276,48 @@ class BH_Messenger_Options {
                 }
             });
         </script>
+    <?php
+    }
+
+    /* -----------------------------
+     * Developer Tools Page
+     * ---------------------------*/
+    public function render_developer_page() {
+        if (! current_user_can('manage_options')) {
+            wp_die(esc_html__('You do not have permission to access this page.', 'blackhaven-messenger'));
+        }
+
+    ?>
+        <div class="wrap">
+            <h1><?php esc_html_e('BlackHaven Messenger Developer Log', 'blackhaven-messenger'); ?></h1>
+            <pre style="background:#f9f9f9; border:1px solid #e1e1e1; border-radius:4px; padding:1em; font-size:13px; line-height:1.6;">
+        BlackHaven Messenger - Developer Notes
+
+        Security & Privacy
+        --------------
+        - All messages and any attempt to access or tell that the plugin is installed needs to be blocked by outside access.
+        - Any and all data stored regarding users must be encrypted and only accessible by the user themselves on the device.
+        - The plugin should know nothing about the content of the messages or user identities (including meta data).
+
+        Upcoming Features
+        -----------------
+        - Improved message encryption and delivery.
+        - Enhanced user identity management.
+        - REST API endpoints for mobile and web integration.
+        - Admin tools for debugging and data export.
+
+        Support & Documentation
+        -----------------------
+        - For help, visit: https://github.com/blackhaven/messenger
+        - Documentation: https://blackhaven.local/docs/messenger
+        - Contact: support@blackhaven.local
+
+        Changelog
+        ---------
+        - 1.0.0: Initial public release.
+
+        </pre>
+        </div>
     <?php
     }
 
