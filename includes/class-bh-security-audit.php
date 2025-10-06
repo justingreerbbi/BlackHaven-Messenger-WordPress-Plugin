@@ -22,8 +22,8 @@ class BH_Security_Audit {
     public function add_submenu() {
         add_submenu_page(
             $this->menu_parent_slug,
-            'Security Audit',
-            'Security Audit',
+            'Security',
+            'Security',
             'manage_options',
             $this->menu_slug,
             [$this, 'render_page']
