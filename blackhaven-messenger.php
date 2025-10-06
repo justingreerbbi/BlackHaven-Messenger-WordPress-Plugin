@@ -86,6 +86,7 @@ function bh_messenger_activate() {
         created_by BIGINT UNSIGNED NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         session_key VARBINARY(2048) DEFAULT NULL,
+        conversation_name VARCHAR(100) DEFAULT NULL,
         FOREIGN KEY (created_by) REFERENCES {$wpdb->prefix}users(ID)
     ) $charset_collate;";
 

@@ -286,10 +286,10 @@ class BH_Messenger_REST {
         ));
 
         // For each conversation, get members and their keys
-        foreach ($conversations as &$conversation) {
+        foreach ($conversations as $conversation) {
             // Get members
             $members = $wpdb->get_results($wpdb->prepare(
-                "SELECT u.ID, u.display_name, uk.public_key, uk.key_type, uk.expires_at
+                "SELECT u.ID, u.display_name, uk.ik_pub_b64, uk.created_at
              FROM {$conversation_members_table} cm
              JOIN {$wpdb->users} u ON cm.user_id = u.ID
              LEFT JOIN {$user_keys_table} uk ON uk.user_id = u.ID
@@ -300,7 +300,7 @@ class BH_Messenger_REST {
 
             // Get latest message
             $latest_message = $wpdb->get_row($wpdb->prepare(
-                "SELECT m.ID, m.sender_id, m.encrypted_text, m.created_at
+                "SELECT m.ID, m.sender_id, m.message_text, m.nonce, m.created_at
              FROM {$wpdb->prefix}" . BH_TABLE_MESSAGES . " m
              WHERE m.conversation_id = %d
              ORDER BY m.created_at DESC, m.ID DESC
@@ -309,21 +309,21 @@ class BH_Messenger_REST {
             ));
             $conversation->latest_message = $latest_message;
 
-            $conversation->chat_name = '';
+            $conversation->conversation_name = '';
             if ($conversation->type === 'private' && count($members) === 2) {
 
-                // For private chats, set the chat name to the other user's display name
+                // For private chats, set the conversation name to the other user's display name
                 foreach ($members as $member) {
                     if ((int)$member->ID !== (int)$user_id) {
-                        $conversation->chat_name = $member->display_name;
+                        $conversation->conversation_name = $member->display_name;
                         break;
                     }
                 }
             } elseif ($conversation->type === 'group') {
 
-                // @todo: Give every member the ability to set a group chat name.
+                // @todo: Give every member the ability to set a group conversation name.
                 // For group chats, we can set a default name or leave it blank for now
-                $conversation->chat_name = 'Group Chat';
+                $conversation->conversation_name = 'Group Chat';
             }
         }
 
@@ -534,6 +534,12 @@ class BH_Messenger_REST {
         }
 
         global $wpdb;
+
+        // Get the other users name based on their ID
+        $other_user = get_user_by('ID', $other_user_id);
+        if (!$other_user) {
+            return new WP_Error('invalid_user', 'The specified user does not exist.', ['status' => 400]);
+        }
 
         // Insert new conversation
         $insert_conversation = $wpdb->insert(

@@ -54,6 +54,7 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 -   Real ID's for users should nt be used? This can provide a work around with other weaknesses in the WordPress platform.
 -   Refactor all requests to use POST instead of GET. privacy overrides purity in this case. Do a write up on why these things are being modified.
 -   Add PreKey support for forward security. Double ratchet preferred. I 100% forgot about this until I was writing the mobile API class. New DB table, and logic for symmetric key gen and exchange.
+-   We ABSOLUTELY need to look into rewriting the API to be one endpoint and pass a parameter to keep all endpoints obscured. The idea is to limit exposure. Issue with a single endpoint?
 
 ## License
 
