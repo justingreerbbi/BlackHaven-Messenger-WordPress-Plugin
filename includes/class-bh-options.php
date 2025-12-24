@@ -298,6 +298,7 @@ class BH_Messenger_Options {
         - All messages and any attempt to access or tell that the plugin is installed needs to be blocked by outside access.
         - Any and all data stored regarding users must be encrypted and only accessible by the user themselves on the device.
         - The plugin should know nothing about the content of the messages or user identities (including meta data).
+        - User ID's need to be hashed? Not sure how to handle this yet.
 
         Upcoming Features
         -----------------
@@ -341,6 +342,14 @@ class BH_Messenger_Options {
         add_settings_section('bh_messenger_section_advanced', __('Advanced Settings', 'blackhaven-messenger'), '__return_false', $this->screen_advanced);
         add_settings_field('bh_messenger_access_token_lifetime', __('Access Token Lifetime', 'blackhaven-messenger'), [$this, 'render_advanced_access_token_lifetime'], $this->screen_advanced, 'bh_messenger_section_advanced');
         add_settings_field('bh_messenger_remove_data_on_deactivation', __('Remove Data on Deactivation', 'blackhaven-messenger'), [$this, 'render_advanced_remove_data_on_deactivation'], $this->screen_advanced, 'bh_messenger_section_advanced');
+        add_settings_field(
+            'bh_messenger_force_vpn',
+            __('Force VPN Usage', 'blackhaven-messenger'),
+            [$this, 'render_advanced_force_vpn'],
+            $this->screen_advanced,
+            'bh_messenger_section_advanced'
+        );
+
         add_settings_field('bh_messenger_debug', __('Enable Debug Mode', 'blackhaven-messenger'), [$this, 'render_advanced_debug'], $this->screen_advanced, 'bh_messenger_section_advanced');
 
         register_setting(
@@ -359,9 +368,10 @@ class BH_Messenger_Options {
 
     public function sanitize_advanced_options($input) {
         return [
-            'access_token_lifetime'     => isset($input['access_token_lifetime']) ? max(0, absint($input['access_token_lifetime'])) : 3600,
-            'remove_data_on_deactivation' => !empty($input['remove_data_on_deactivation']) ? 1 : 0,
-            'debug'                     => !empty($input['debug']) ? 1 : 0,
+            'access_token_lifetime'         => isset($input['access_token_lifetime']) ? max(0, absint($input['access_token_lifetime'])) : 3600,
+            'remove_data_on_deactivation'   => !empty($input['remove_data_on_deactivation']) ? 1 : 0,
+            'debug'                         => !empty($input['debug']) ? 1 : 0,
+            'force_blackhaven_vpn_usage'    => !empty($input['force_blackhaven_vpn_usage']) ? 1 : 0,
         ];
     }
 
@@ -409,6 +419,23 @@ class BH_Messenger_Options {
             <input type="checkbox" name="<?php echo esc_attr($this->opt_advanced); ?>[debug]" value="1" <?php echo $checked; ?> />
             <?php esc_html_e('Enable Debug Mode', 'blackhaven-messenger'); ?>
         </label>
+    <?php
+    }
+
+    public function render_advanced_force_vpn() {
+        $options = get_option($this->opt_advanced, []);
+        $checked = !empty($options['force_blackhaven_vpn_usage']) ? 'checked' : '';
+    ?>
+        <label>
+            <input type="checkbox" name="<?php echo esc_attr($this->opt_advanced); ?>[force_blackhaven_vpn_usage]" value="1" <?php echo $checked; ?> />
+            <?php esc_html_e('Force BlackHaven VPN Usage.', 'blackhaven-messenger'); ?>
+        </label>
+        <a id="bh-vpn-learn-more" href="https://blackhaven-dynamics.com" target="_blank" rel="noopener noreferrer" style="margin-left:0px; color:#0073aa; text-decoration:underline;">
+            <?php esc_html_e('Learn More', 'blackhaven-messenger'); ?>
+        </a>
+        <div id="bh-vpn-info" style="display:none; position:absolute; background:#fff; border:1px solid #ccc; border-radius:4px; padding:10px; max-width:300px; box-shadow:0 2px 8px rgba(0,0,0,0.1); z-index:100;">
+            <?php esc_html_e('When enabled, all messenger traffic will be routed through the BlackHaven VPN for enhanced privacy and security. This helps protect user identities and message contents from external access.', 'blackhaven-messenger'); ?>
+        </div>
     <?php
     }
 
