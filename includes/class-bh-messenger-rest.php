@@ -79,7 +79,39 @@ class BH_Messenger_REST {
                     'validate_callback' => function ($param, $request, $key) {
                         return is_numeric($param) && intval($param) > 0;
                     }
-                ]
+                ],
+                'after_message_id' => [
+                    'validate_callback' => function ($param, $request, $key) {
+                        return is_numeric($param) && intval($param) >= 0;
+                    },
+                    'required' => false,
+                ],
+                'limit' => [
+                    'validate_callback' => function ($param, $request, $key) {
+                        return is_numeric($param) && intval($param) > 0;
+                    },
+                    'required' => false,
+                ],
+            ]
+        ]);
+
+        // Lightweight: Check if conversation has new messages since last_message_id
+        register_rest_route('blackhaven-messenger/v1/conversations/', '/check-new-messages', [
+            'methods'  => 'POST',
+            'callback' => [$this, 'check_conversation_new_messages'],
+            'permission_callback' => [$this, 'check_access_token'],
+            'args' => [
+                'conversation_id' => [
+                    'validate_callback' => function ($param, $request, $key) {
+                        return is_numeric($param) && intval($param) > 0;
+                    }
+                ],
+                'last_message_id' => [
+                    'validate_callback' => function ($param, $request, $key) {
+                        return is_numeric($param) && intval($param) >= 0;
+                    },
+                    'required' => false,
+                ],
             ]
         ]);
 
@@ -461,6 +493,8 @@ class BH_Messenger_REST {
 
         $user_id = $request->get_param('user_id');
         $conversation_id = $request->get_param('conversation_id');
+        $after_message_id = $request->get_param('after_message_id');
+        $limit = $request->get_param('limit');
 
         if (empty($conversation_id) || !is_numeric($conversation_id) || intval($conversation_id) <= 0 || empty($user_id) || !is_numeric($user_id) || intval($user_id) <= 0) {
             return new WP_Error('invalid_request', 'Missing or invalid parameters.', ['status' => 400]);
@@ -479,12 +513,44 @@ class BH_Messenger_REST {
             return new WP_Error('not_a_member', 'You are not a member of this conversation.', ['status' => 403]);
         }
 
+        // Optional filtering: only messages after a given message id
+        $after_message_id = is_null($after_message_id) || $after_message_id === '' ? null : intval($after_message_id);
+        if (!is_null($after_message_id) && $after_message_id < 0) {
+            return new WP_Error('invalid_request', 'after_message_id must be 0 or greater.', ['status' => 400]);
+        }
+
+        // Optional limiting: limit number of messages returned
+        $limit = is_null($limit) || $limit === '' ? null : intval($limit);
+        if (!is_null($limit) && $limit <= 0) {
+            return new WP_Error('invalid_request', 'limit must be greater than 0.', ['status' => 400]);
+        }
+        if (!is_null($limit)) {
+            // Guardrails to avoid accidental huge payloads from clients.
+            $limit = max(1, min(500, $limit));
+        }
+
+        $messages_table = $wpdb->prefix . BH_TABLE_MESSAGES;
+        $where_sql = 'WHERE m.conversation_id = %d';
+        $where_args = [$conversation_id];
+
+        if (!is_null($after_message_id)) {
+            $where_sql .= ' AND m.id > %d';
+            $where_args[] = $after_message_id;
+        }
+
+        $limit_sql = '';
+        if (!is_null($limit)) {
+            $limit_sql = ' LIMIT %d';
+            $where_args[] = $limit;
+        }
+
         // Get messages for the conversation
-        $messages = $wpdb->get_results($wpdb->prepare(
-            "SELECT m.* FROM {$wpdb->prefix}" . BH_TABLE_MESSAGES . " m
-            WHERE m.conversation_id = %d",
-            $conversation_id
-        ));
+        $messages = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT m.* FROM {$messages_table} m {$where_sql} ORDER BY m.id ASC{$limit_sql}",
+                $where_args
+            )
+        );
 
         // Get conversation data
         $conversation = $wpdb->get_row($wpdb->prepare(
@@ -509,6 +575,83 @@ class BH_Messenger_REST {
         ];
 
         return $messages;
+    }
+
+    /**
+     * Lightweight endpoint to check if a conversation has new messages.
+     *
+     * Request params:
+     * - conversation_id (required)
+     * - last_message_id (optional, defaults to 0)
+     *
+     * Response:
+     * - has_new_messages (bool)
+     * - new_count (int)
+     * - latest_message_id (int)
+     * - latest_message_created_at (string|null)
+     *
+     * @param WP_REST_Request $request
+     * @return array|WP_Error
+     */
+    public function check_conversation_new_messages($request) {
+        $user_id = $request->get_param('user_id');
+        $conversation_id = $request->get_param('conversation_id');
+        $last_message_id = $request->get_param('last_message_id');
+
+        if (empty($conversation_id) || !is_numeric($conversation_id) || intval($conversation_id) <= 0 || empty($user_id) || !is_numeric($user_id) || intval($user_id) <= 0) {
+            return new WP_Error('invalid_request', 'Missing or invalid parameters.', ['status' => 400]);
+        }
+
+        $conversation_id = intval($conversation_id);
+        $user_id = intval($user_id);
+        $last_message_id = is_null($last_message_id) || $last_message_id === '' ? 0 : intval($last_message_id);
+        if ($last_message_id < 0) {
+            return new WP_Error('invalid_request', 'last_message_id must be 0 or greater.', ['status' => 400]);
+        }
+
+        global $wpdb;
+
+        // Check if user is a member of the conversation
+        $is_member = $wpdb->get_var($wpdb->prepare(
+            "SELECT conversation_id FROM {$wpdb->prefix}" . BH_TABLE_CONVERSATION_MEMBERS . " WHERE conversation_id = %d AND user_id = %d",
+            $conversation_id,
+            $user_id
+        ));
+
+        if (!$is_member) {
+            return new WP_Error('not_a_member', 'You are not a member of this conversation.', ['status' => 403]);
+        }
+
+        $messages_table = $wpdb->prefix . BH_TABLE_MESSAGES;
+
+        // Single lightweight aggregate query.
+        $row = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT 
+                    MAX(id) AS latest_message_id,
+                    MAX(created_at) AS latest_message_created_at,
+                    COUNT(CASE WHEN id > %d THEN 1 END) AS new_count
+                 FROM {$messages_table}
+                 WHERE conversation_id = %d",
+                $last_message_id,
+                $conversation_id
+            ),
+            ARRAY_A
+        );
+
+        $latest_message_id = isset($row['latest_message_id']) && $row['latest_message_id'] !== null ? intval($row['latest_message_id']) : 0;
+        $latest_message_created_at = $row['latest_message_created_at'] ?? null;
+        $new_count = isset($row['new_count']) && $row['new_count'] !== null ? intval($row['new_count']) : 0;
+
+        return [
+            'conversation_id' => $conversation_id,
+            'last_message_id' => $last_message_id,
+            'has_new_messages' => ($new_count > 0),
+            'new_count' => $new_count,
+            'latest_message_id' => $latest_message_id,
+            'latest_message_created_at' => $latest_message_created_at,
+            'server_time' => current_time('mysql'),
+        ];
     }
 
     /**
