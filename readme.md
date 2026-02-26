@@ -1,60 +1,85 @@
 # BlackHaven Messenger
 
-A WordPress plugin that adds messaging functionality to your BlackHaven site.
+BlackHaven Messenger is a WordPress plugin that adds private messaging functionality to a BlackHaven-powered site. It is designed for secure communication, a straightforward user experience, and an architecture that can grow over time.
+
+## Overview
+
+This plugin provides messaging features for WordPress sites that want a self-hosted communication system. It includes support for direct messaging, notifications, and a client-side encryption model intended to reduce server-side exposure to message contents.
 
 ## Features
 
--   Real-time messaging between users
--   User-friendly interface
--   Notification support
--   Secure and scalable
-
-## Installation
-
-1. Download or clone the repository.
-2. Upload the plugin to your WordPress `/wp-content/plugins/` directory.
-3. Activate the plugin from the WordPress admin dashboard.
-
-## Usage
-
--   Navigate to the Messenger section in your WordPress dashboard.
--   Configure settings as needed.
--   Start messaging with other users.
+- Real-time or near real-time messaging between users
+- User-friendly interface for sending and receiving messages
+- Notification support for new activity
+- Client-side encryption before message data reaches the server
+- Architecture designed with privacy and future scalability in mind
 
 ## Requirements
 
--   WordPress 6.8+
--   PHP 8.2+
+- WordPress 6.8 or higher
+- PHP 8.2 or higher
 
-## Frequently Asked Question
+## Installation
 
-Q. Why do all API routes use POST?
-A. Security and Privacy over purity is the goal. GET requests often leak data in the server logs, caching, browser history, analytics, etc.
+1. Download or clone this repository.
+2. Upload the plugin to your WordPress `/wp-content/plugins/` directory.
+3. Activate the plugin from the WordPress admin dashboard.
+4. Open the BlackHaven Messenger settings area and configure the plugin for your site.
 
-Q. Why us the user ID needed in all requests if an access token is already used?
-A. The plugin stores access token in hash form. Sending the user ID provides faster lookups to lookup hashed tokens.
+## Usage
 
-Q. Are conversations stored on the server and if so, are they encrypted?
-A. Yes, conversations are indeed store on the system, however they are encrypted on the clients before they are seen by the server.
+After activation:
 
-Q. Is the encryption used Post-Quantum Computing resilient?
-A. As of now, no. While the clients use crazy strong encryption, it is not ready for PQC. We are exploring options to implement PQC safe encryption.
+1. Go to the Messenger section in the WordPress admin dashboard.
+2. Review and configure the available settings.
+3. Enable messaging for your site users.
+4. Start conversations through the supported interface or client application.
 
-Q. When a message is deleted, does it remove it from all that I sent it to?
-A. Yes. When a message or conversation is removed, it will be removed for all people involved as well as removed from the server.
+## Security Notes
+
+BlackHaven Messenger is built with privacy-focused design choices. Message content is encrypted on the client before it is processed by the server. The server may store encrypted conversation data, but it is not intended to store plaintext message content.
+
+The project also favors reducing unnecessary exposure of sensitive data through URL parameters, logs, caches, and browser history.
+
+## Frequently Asked Questions
+
+### Why do the API routes use POST?
+
+The plugin favors privacy and security over strict REST-style purity. GET requests can expose data through server logs, browser history, proxies, caches, analytics tools, and other systems. Using POST helps reduce that exposure.
+
+### Why is the user ID included in requests if an access token is already provided?
+
+Access tokens are stored in hashed form. Including the user ID allows faster and more efficient lookup of the hashed token during request validation.
+
+### Are conversations stored on the server, and are they encrypted?
+
+Yes, conversation data can be stored on the server. However, message content is encrypted on the client before it reaches the server.
+
+### Is the encryption post-quantum secure?
+
+Not at this time. The current implementation uses strong encryption, but it is not yet post-quantum resilient. Post-quantum approaches are being evaluated for future versions.
+
+### When a message is deleted, is it removed for all participants?
+
+Yes. When a message or conversation is deleted, it is removed for all participants and deleted from the server as part of the intended behavior.
+
+## Development Priorities
+
+The following items are planned or under consideration:
+
+- Move user identifiers out of URL paths and into request bodies to reduce exposure in logs
+- Replace any remaining parameterized URL patterns with POST body parameters where appropriate
+- Avoid exposing direct internal user identifiers when possible
+- Continue refactoring routes to prefer POST over GET when privacy is a concern
+- Document the security and privacy reasoning behind these API design decisions
+- Add PreKey support for improved forward secrecy
+- Evaluate a double ratchet design for future message key management
+- Add database and application logic required for symmetric key exchange improvements
+- Review whether consolidating API access behind a more limited endpoint surface would improve privacy and reduce exposure
 
 ## Contributing
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-## ToDos
-
--   Using the user ID in the URL is not secure, move this to the body parameters to halp with log leaks.
--   While traditional API routes may use /x/y/x for parameters passing during a request, this need to be changed. URLs are logged in servers.
--   Real ID's for users should nt be used? This can provide a work around with other weaknesses in the WordPress platform.
--   Refactor all requests to use POST instead of GET. privacy overrides purity in this case. Do a write up on why these things are being modified.
--   Add PreKey support for forward security. Double ratchet preferred. I 100% forgot about this until I was writing the mobile API class. New DB table, and logic for symmetric key gen and exchange.
--   We ABSOLUTELY need to look into rewriting the API to be one endpoint and pass a parameter to keep all endpoints obscured. The idea is to limit exposure. Issue with a single endpoint?
+Pull requests are welcome. For major changes, please open an issue first so the proposed change can be discussed before implementation.
 
 ## License
 
